@@ -1,754 +1,750 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Quality Factory — Learn QE by Playing</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Arcade-style, web-based Quality Engineering game: SPC, acceptance sampling, capability, costs, and upgrades. Play to learn!" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    :root{
-      --bg:#0b1020; --panel:#0e1530; --card:#121a3b; --border:#1f2a5a;
-      --text:#e9edf8; --muted:#a6b0d4; --accent:#5df2a8; --warn:#ffd166; --bad:#ff6b6b; --good:#90ee90;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;background:linear-gradient(180deg,#060a18 0%, #0b1020 100%);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
-    header{max-width:1250px;margin:0 auto;padding:16px 14px}
-    .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .title{font-weight:800;font-size:22px;letter-spacing:.5px}
-    .badge{padding:6px 10px;border:1px solid var(--border);background:var(--panel);border-radius:10px;font-weight:700}
-    .badge.good{border-color:#2d6b49;background:#0f2d1e}
-    .badge.warn{border-color:#6b5f2d;background:#2d2810}
-    .badge.bad{border-color:#6b2d2d;background:#2d1010}
-    .top-right{margin-left:auto;display:flex;gap:10px;align-items:center}
-    select, input[type="number"]{background:#0a1227;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px}
-    button{background:#19255c;border:1px solid #2a3a86;color:var(--text);padding:10px 14px;border-radius:10px;cursor:pointer}
-    button.primary{background:#1ddf7b;border-color:#39ffb0;color:#04110a;font-weight:800}
-    button:disabled{opacity:.55;cursor:not-allowed}
-    .wrap{max-width:1250px;margin:0 auto;padding:0 14px 40px}
-    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
-    @media (max-width:1100px){.grid{grid-template-columns:1fr}}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
-    h2{margin:0 0 8px;font-size:18px}
-    .sub{color:var(--muted);font-size:12px;margin-top:-4px;margin-bottom:6px}
-    canvas{background:#0b1227;border:1px solid var(--border);border-radius:12px}
-    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    @media (max-width:1100px){.kpis{grid-template-columns:1fr}}
-    .kpi{background:#0b1227;border:1px solid var(--border);border-radius:12px;padding:10px}
-    .kpi .name{font-size:12px;color:var(--muted)}
-    .kpi .val{font-size:22px;font-weight:800}
-    .meter{height:10px;background:#0b1227;border:1px solid var(--border);border-radius:20px;overflow:hidden}
-    .meter > i{display:block;height:100%;background:linear-gradient(90deg,#ff6b6b,#ffd166,#5df2a8);width:40%}
-    .bar{display:flex;gap:10px}
-    .bar > *{flex:1}
-    .belt{position:relative;height:220px;overflow:hidden;border-radius:12px;background:
-      linear-gradient(#0a1227,#0a1227) padding-box,
-      repeating-linear-gradient(90deg, transparent, transparent 40px, #0b1a46 40px, #0b1a46 42px) border-box;
-      border:1px solid var(--border)
-    }
-    .belt .lane{position:absolute;left:0;right:0;height:54px;border-top:1px dashed #213069}
-    .chip{position:absolute;width:24px;height:24px;border-radius:50%;
-      box-shadow:0 2px 6px rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800}
-    .chip.good{background:#1aa355}
-    .chip.bad{background:#b13535}
-    .chip.sampling{background:#f59e0b}
-    .pill{font-size:11px;padding:5px 8px;border-radius:999px;border:1px solid var(--border);background:#0b1227}
-    .log{max-height:160px;overflow:auto;background:#0b1227;border:1px solid var(--border);border-radius:12px;padding:10px;font-size:12px}
-    .log b{color:#83caff}
-    .controls{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    @media (max-width:1100px){.controls{grid-template-columns:1fr}}
-    .upgrade{display:flex;flex-direction:column;gap:6px;border:1px solid var(--border);background:#0b1227;border-radius:12px;padding:10px}
-    .upgrade h3{margin:0;font-size:14px}
-    .upgrade .desc{font-size:12px;color:var(--muted)}
-    .ach{display:flex;gap:8px;flex-wrap:wrap}
-    .ach .a{border:1px solid var(--border);background:#0b1227;padding:6px 10px;border-radius:999px;font-size:12px}
-    .righty{display:grid;grid-template-rows:auto auto auto 1fr;gap:12px}
-    .hint{color:var(--muted);font-size:12px;margin-top:6px}
-    .modal{position:fixed;inset:0;background:rgba(5,8,20,.7);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
-    .modal .box{max-width:700px;width:100%;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
-    .modal .box h3{margin:0 0 6px}
-    .modal .box p{color:var(--muted)}
-    .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .note{font-size:12px;color:var(--muted)}
-    a{color:#9be2ff}
-  </style>
+<meta charset="utf-8" />
+<title>Factory Quality Quest — Learn QE by Playing</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Arcade factory game for Quality Engineering: SPC mini-game, acceptance sampling, gage error, drift, assignable causes, AOQ, Cpk, costs, profits, achievements." />
+<style>
+  :root{
+    --bg:#0b1220; --panel:#0f172a; --ink:#e5e7eb; --muted:#94a3b8; --hl:#22c55e; --bad:#ef4444; --warn:#f59e0b;
+    --card:#111827; --border:#243044; --accent:#60a5fa; --shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:linear-gradient(180deg,#0b1220,#0a1226 50%,#0a152c);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+  header{max-width:1200px;margin:18px auto 8px;padding:0 14px;display:flex;align-items:center;gap:14px}
+  header h1{font-size:20px;margin:0}
+  .pill{background:#0e1a33;border:1px solid var(--border);border-radius:999px;padding:4px 10px;color:var(--muted);font-size:12px}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 14px 40px;display:grid;grid-template-columns:340px 1fr;gap:16px}
+  @media (max-width:1050px){.wrap{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+  .left{padding:12px}
+  .section{border:1px solid var(--border);border-radius:12px;background:#0c172e;margin:8px 0}
+  .section h3{margin:0;padding:8px 10px;color:var(--muted);font-size:13px;border-bottom:1px solid var(--border)}
+  .section .pad{padding:10px}
+  label{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:6px 0;color:#cdd5e1}
+  input[type="number"], input[type="range"]{width:120px;background:#0b1428;border:1px solid var(--border);color:var(--ink);padding:6px;border-radius:8px}
+  input[type="range"]{width:160px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button{background:#14213a;border:1px solid #2b3a55;color:var(--ink);padding:10px 14px;border-radius:10px;cursor:pointer}
+  button:hover{filter:brightness(1.1)}
+  button.primary{background:#16a34a;border-color:#22c55e;color:#07150f;font-weight:700}
+  button.danger{background:#7f1d1d;border-color:#ef4444}
+  button.ghost{background:transparent;border-color:#334155;color:#cbd5e1}
+  .meter{height:12px;border-radius:999px;background:#0b1428;border:1px solid var(--border);overflow:hidden}
+  .meter>i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#84cc16,#f59e0b,#ef4444);width:40%}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .stat{background:#0b1428;border:1px solid var(--border);border-radius:12px;padding:10px}
+  .stat h4{margin:0 0 2px;font-size:12px;color:var(--muted)}
+  .stat .big{font-weight:800;font-size:22px}
+  .tiny{font-size:12px;color:var(--muted)}
+  .game{position:relative;min-height:560px;padding:10px}
+  .canvasWrap{background:linear-gradient(180deg,#0b1220,#0b1527);border:1px solid var(--border);border-radius:16px;padding:8px;display:grid;grid-template-rows:auto 200px 140px;gap:8px}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .bar .lefty,.bar .righty{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .tag{padding:4px 10px;border:1px solid var(--border);border-radius:999px;color:#d1d5db;background:#0e1a33}
+  canvas{background:#081018;border:1px solid var(--border);border-radius:12px}
+  .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;border:1px solid #334155;padding:1px 6px;border-radius:6px;background:#0b1428;color:#cbd5e1}
+  footer{max-width:1200px;margin:12px auto 40px;color:var(--muted);font-size:12px;padding:0 14px}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#0b1428;border:1px solid var(--border);padding:10px 14px;border-radius:10px;box-shadow:var(--shadow);opacity:0;transition:opacity .3s, transform .3s}
+  .toast.show{opacity:1;transform:translate(-50%,-6px)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:16px}
+  .modal .box{max-width:900px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+  .modal h2{margin:0 0 6px}
+  .ach{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;margin:4px;border-radius:999px;border:1px solid var(--border);background:#0d162a}
+</style>
 </head>
 <body>
-  <header class="row">
-    <div class="title">🎮 Quality Factory</div>
-    <span class="badge">Money: $<span id="money">0</span></span>
-    <span class="badge">Score: <span id="score">0</span></span>
-    <span class="badge">Reputation: ⭐ <span id="rep">3.0</span>/5</span>
-    <div class="top-right">
-      <label class="pill">Speed
-        <select id="speed">
-          <option value="1">1x</option>
-          <option value="2" selected>2x</option>
-          <option value="3">3x</option>
-        </select>
-      </label>
-      <label class="pill">Seed <input type="number" id="seed" style="width:90px" value="0" title="0 = random run"></label>
-      <button id="startBtn" class="primary">▶ Start</button>
-      <button id="pauseBtn">⏸ Pause</button>
-      <button id="resetBtn">↺ Reset</button>
-    </div>
-  </header>
+<header>
+  <h1>🏭 Factory Quality Quest</h1>
+  <span class="pill">Arcade + SPC + Sampling + Costs</span>
+  <span class="pill">No installs • Works on GitHub Pages</span>
+</header>
 
-  <div class="wrap grid">
-    <div class="card">
-      <h2>Production Line</h2>
-      <div class="sub">Fulfill lots while keeping **quality high** and **costs low**. OOC events will pause the line—pick how to react.</div>
-      <div class="belt" id="belt" aria-label="Animated conveyor belt"></div>
-      <div class="bar" style="margin-top:10px">
-        <div class="kpi">
-          <div class="name">DPMO</div>
-          <div class="val" id="k_dpmo">—</div>
-          <div class="name">Cpk</div>
-          <div class="val" id="k_cpk">—</div>
-        </div>
-        <div class="kpi">
-          <div class="name">% Lots Accepted</div>
-          <div class="val" id="k_pa">—</div>
-          <div class="name">AOQ (escapes)</div>
-          <div class="val" id="k_aoq">—</div>
-        </div>
-        <div class="kpi">
-          <div class="name">Cost / Unit</div>
-          <div class="val" id="k_cpu">—</div>
-          <div class="name">SPC Resets</div>
-          <div class="val" id="k_resets">—</div>
-        </div>
+<div class="wrap">
+  <!-- LEFT: Controls & Stats -->
+  <div class="panel left">
+    <div class="section">
+      <h3>Game Controls</h3>
+      <div class="pad row">
+        <button class="primary" id="playBtn">▶ Play</button>
+        <button class="ghost" id="pauseBtn">⏸ Pause</button>
+        <button class="ghost" id="resetBtn">↻ Reset</button>
+        <button id="exportBtn" class="ghost">⬇ Export CSV</button>
       </div>
-
-      <div class="bar" style="margin-top:12px">
-        <div class="card">
-          <h2>X̄ Control Chart</h2>
-          <canvas id="xbarChart" height="210"></canvas>
-          <div class="note">UCL/LCL computed with known σ and subgroup size g.</div>
-        </div>
-        <div class="card">
-          <h2>OC Curve (n,c)</h2>
-          <canvas id="ocChart" height="210"></canvas>
-          <div class="note">Customer acceptance P<sub>a</sub> vs. true p (fraction defective).</div>
-        </div>
+      <div class="pad row tiny">
+        <span>Round length</span>
+        <input type="range" id="roundLen" min="60" max="300" value="180" />
+        <span><span id="roundLenVal">180</span>s</span>
       </div>
     </div>
 
-    <div class="righty">
-      <div class="card">
-        <h2>Factory Settings</h2>
-        <div class="sub">Try different specs, process, and plan. Changes apply instantly.</div>
-        <div class="controls">
-          <div class="upgrade">
-            <h3>Specs</h3>
-            <div class="desc">LSL / USL define tolerance window.</div>
-            <div class="flex">
-              <label class="pill">LSL <input id="LSL" type="number" step="0.01" value="9.5" style="width:80px"></label>
-              <label class="pill">USL <input id="USL" type="number" step="0.01" value="10.5" style="width:80px"></label>
-              <label class="pill">Target μ₀ <input id="mu0" type="number" step="0.01" value="10.0" style="width:80px"></label>
-            </div>
-          </div>
-
-          <div class="upgrade">
-            <h3>Process</h3>
-            <div class="desc">σ, drift, assignable cause probability & shift.</div>
-            <div class="flex">
-              <label class="pill">σ <input id="sigma" type="number" step="0.01" value="0.15" style="width:80px"></label>
-              <label class="pill">Drift/100 items <input id="drift" type="number" step="0.001" value="0.02" style="width:100px"></label>
-              <label class="pill">Assign P/lot <input id="acP" type="number" step="0.01" value="0.15" style="width:90px"></label>
-              <label class="pill">Shift (×σ) <input id="acShift" type="number" step="0.1" value="1.5" style="width:90px"></label>
-            </div>
-          </div>
-
-          <div class="upgrade">
-            <h3>Measurement</h3>
-            <div class="desc">Gage error increases missed defects and false rejects.</div>
-            <div class="flex">
-              <label class="pill">Gage σ (%Tol) <input id="gagePct" type="number" step="0.1" value="6" style="width:100px"></label>
-              <span class="pill">ndc: <b id="ndc">—</b></span>
-            </div>
-          </div>
-
-          <div class="upgrade">
-            <h3>SPC & Sampling</h3>
-            <div class="desc">Subgroup size g; plan (n,c); lot size N.</div>
-            <div class="flex">
-              <label class="pill">g <input id="g" type="number" min="2" value="5" style="width:70px"></label>
-              <label class="pill">N <input id="N" type="number" min="20" value="80" style="width:80px"></label>
-              <label class="pill">n <input id="n" type="number" min="1" value="32" style="width:80px"></label>
-              <label class="pill">c <input id="c" type="number" min="0" value="1" style="width:70px"></label>
-              <label class="pill"><input id="autoSPC" type="checkbox" checked> Auto-SPC pause</label>
-            </div>
-          </div>
-        </div>
-        <div class="hint">Tip: Bigger g tightens control limits; higher n lowers OC but raises inspection cost.</div>
+    <div class="section">
+      <h3>Process & Spec</h3>
+      <div class="pad">
+        <label>LSL <input type="number" id="LSL" step="0.01" value="9.5"></label>
+        <label>USL <input type="number" id="USL" step="0.01" value="10.5"></label>
+        <label>Target μ<sub>0</sub> <input type="number" id="mu0" step="0.01" value="10.0"></label>
+        <label>Process σ <input type="number" id="sigma" step="0.01" value="0.15"></label>
+        <label>Drift / 100 items <input type="number" id="driftPer100" step="0.005" value="0.02"></label>
+        <label>Assignable cause prob/lot <input type="number" id="acProb" step="0.01" value="0.15"></label>
+        <label>Assignable shift (×σ) <input type="number" id="acSigmaMult" step="0.1" value="1.8"></label>
       </div>
+    </div>
 
-      <div class="card">
-        <h2>Actions & Upgrades</h2>
-        <div class="sub">Spend money to improve the process. Cooldowns apply.</div>
-        <div class="controls">
-          <div class="upgrade">
-            <h3>🔧 Tune Machine ($75)</h3>
-            <div class="desc">Instantly snap μ to target μ₀; clears small drift.</div>
-            <button id="actTune">Use (Q)</button>
-          </div>
-          <div class="upgrade">
-            <h3>🛠️ Replace Tool ($200)</h3>
-            <div class="desc">Reduce σ by 15% (min 0.06) and reset drift rate by 25%.</div>
-            <button id="actTool">Use (W)</button>
-          </div>
-          <div class="upgrade">
-            <h3>🧪 Calibrate Gage ($120)</h3>
-            <div class="desc">Reduce gage %Tol by 25% (min 2%). Improves ndc.</div>
-            <button id="actGage">Use (E)</button>
-          </div>
-          <div class="upgrade">
-            <h3>👷‍♀️ Train Operators ($160)</h3>
-            <div class="desc">Reduce assignable P by 20% and typical shift by 10%.</div>
-            <button id="actTrain">Use (R)</button>
-          </div>
-          <div class="upgrade">
-            <h3>🤖 Auto Sampler ($180)</h3>
-            <div class="desc">+8 to n (c adjusts if needed). Boosts OC at higher cost.</div>
-            <button id="actSampler">Use (T)</button>
-          </div>
-          <div class="upgrade">
-            <h3>🔍 WE Rules Assist ($140)</h3>
-            <div class="desc">Adds Western Electric Rule 1–2 for early warnings.</div>
-            <button id="actWE">Use (Y)</button>
-          </div>
+    <div class="section">
+      <h3>Inspection & Costs</h3>
+      <div class="pad">
+        <div class="grid2">
+          <label>Lot size (N)<input type="number" id="lotSize" value="80" min="10"></label>
+          <label>Sample n<input type="number" id="sampleN" value="40" min="1"></label>
+          <label>Accept c<input type="number" id="acceptC" value="2" min="0"></label>
+          <label>Subgroup size n̄<input type="number" id="subgroupN" value="5" min="2"></label>
         </div>
-        <div class="hint">Keyboard: Q W E R T Y trigger actions.</div>
+        <label>Gage σ as %Tol <input type="number" id="gagePctTol" value="7.5" step="0.1"></label>
+        <div class="grid2">
+          <label>Inspect $/sample <input type="number" id="inspectCost" value="0.05" step="0.01"></label>
+          <label>Scrap $/part <input type="number" id="scrapCost" value="3.00" step="0.01"></label>
+          <label>External failure $/escape <input type="number" id="extCost" value="30.00" step="0.01"></label>
+          <label>Downtime $/stop <input type="number" id="stopCost" value="60.00" step="0.01"></label>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="stopBtn" class="danger">🛑 STOP LINE (<span class="kbd">Space</span>)</button>
+          <button id="maintBtn">🧰 Maintenance (reduce σ)</button>
+          <button id="calBtn">🧪 Calibrate Gage</button>
+        </div>
       </div>
+    </div>
 
-      <div class="card">
-        <h2>Event Log</h2>
-        <div id="log" class="log" aria-live="polite"></div>
-        <div class="ach" id="ach"></div>
-        <div class="flex" style="margin-top:8px">
-          <button id="exportBtn">⬇ Export Run CSV</button>
-          <span class="note">CSV includes KPIs, lots, X̄ series, and event history.</span>
-        </div>
+    <div class="section">
+      <h3>Scoreboard</h3>
+      <div class="pad grid2">
+        <div class="stat"><h4>Timer</h4><div class="big" id="timer">03:00</div><div class="tiny">Round length</div></div>
+        <div class="stat"><h4>Profit</h4><div class="big" id="profit">$0</div><div class="tiny">Revenue − costs</div></div>
+        <div class="stat"><h4>Cpk</h4><div class="big" id="cpk">—</div><div class="tiny">Capability</div></div>
+        <div class="stat"><h4>AOQ</h4><div class="big" id="aoq">—</div><div class="tiny">Outgoing fraction defective</div></div>
+        <div class="stat"><h4>% Accepted</h4><div class="big" id="pa">—</div><div class="tiny">Lots accepted</div></div>
+        <div class="stat"><h4>DPMO</h4><div class="big" id="dpmo">—</div><div class="tiny">Defects per million</div></div>
+      </div>
+      <div class="pad">
+        <div class="tiny">Customer satisfaction</div>
+        <div class="meter"><i id="satisfactionBar" style="width:60%"></i></div>
+      </div>
+      <div class="pad tiny">
+        <div>High score: <b id="hs">$0</b></div>
+        <div id="achWrap" style="margin-top:6px"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>In-class challenges</h3>
+      <div class="pad tiny">
+        Try: Change \((n,c)\) and gage %Tol; keep AOQ &lt; 1% while maximizing Profit.  
+        Bonus: Hit STOP within 3 subgroups after an OOC point.  
+        Advanced: Design your own double-sampling logic (n₁,c₁,n₂,c₂) and show AOQ ↓.
       </div>
     </div>
   </div>
 
-  <!-- Modal for OOC events -->
-  <div class="modal" id="modal">
-    <div class="box">
-      <h3>🚨 Out-of-Control Signal</h3>
-      <p>The last subgroup mean triggered control rules. Choose:</p>
-      <div class="flex">
-        <button id="mInvestigate" class="primary">🛑 Investigate downtime (cost time + $50)</button>
-        <button id="mIgnore">➡ Keep running (risk escapes & reputation)</button>
-        <button id="mAuto" title="Enable auto-SPC pauses next time">🤖 Enable Auto-SPC</button>
+  <!-- RIGHT: Game Area -->
+  <div class="panel game">
+    <div class="canvasWrap">
+      <div class="bar">
+        <div class="lefty">
+          <span class="tag">Conveyor: <b id="convRate">24</b> items/min</span>
+          <span class="tag">Setpoint μ<span id="muSet">10.00</span></span>
+          <span class="tag">σ<span id="sigmaTag">0.15</span> | Gage σ%Tol <span id="gageTag">7.5</span></span>
+          <span class="tag">Lot <b>#<span id="lotIdx">1</span></b>/<span id="lotCount">∞</span></span>
+        </div>
+        <div class="righty">
+          <span class="tag">OOC detected? Watch X̄ → <b class="tiny">hit STOP fast!</b></span>
+        </div>
       </div>
-      <div class="hint">Investigate: pause 4 "minutes", reset μ to μ₀, add one SPC reset. Ignore: production continues but expect higher defects.</div>
+
+      <!-- Main animation canvas -->
+      <canvas id="gameCanvas" width="920" height="260" aria-label="Factory conveyor"></canvas>
+
+      <!-- Xbar SPC canvas -->
+      <canvas id="spcCanvas" width="920" height="200" aria-label="SPC chart"></canvas>
+
+      <!-- Log -->
+      <div style="border:1px solid var(--border);border-radius:12px;padding:8px;height:130px;overflow:auto;background:#0b1422" id="log"></div>
     </div>
   </div>
+</div>
+
+<footer>
+  Tip: Press <span class="kbd">Space</span> to STOP LINE when the X̄ chart shows a point beyond UCL/LCL (Western Electric Rule 1).  
+  Lots are sampled with your \((n,c)\) plan. Accepting ships all defects → external failure cost; rejecting scraps whole lot.  
+  Maintenance temporarily reduces σ; Calibrate temporarily reduces gage error.
+</footer>
+
+<!-- Tutorial / End modals -->
+<div class="modal" id="tutorial">
+  <div class="box">
+    <h2>Welcome to <em>Factory Quality Quest</em> 🎮</h2>
+    <p>Produce lots, keep customers happy, and maximize profit by managing variation and inspection.</p>
+    <ul>
+      <li><b>SPC mini-game:</b> Watch the X̄ chart. If a point goes outside UCL/LCL (OOC), press <b>STOP LINE</b> (or Space) quickly.</li>
+      <li><b>Acceptance sampling:</b> Pick <code>n</code> and <code>c</code>. Measured defects use your gage error; accepted lots ship all true defects (escapes).</li>
+      <li><b>Events:</b> Assignable causes shift μ; drift slowly moves the process. Maintenance reduces σ; Calibration improves gage temporarily.</li>
+    </ul>
+    <div class="row" style="justify-content:flex-end;margin-top:8px">
+      <button id="closeTut" class="primary">Let’s play</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="gameOver">
+  <div class="box">
+    <h2>Round Complete</h2>
+    <div id="summary"></div>
+    <div class="row" style="justify-content:flex-end;margin-top:8px">
+      <button id="againBtn" class="primary">Play again</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Hello</div>
 
 <script>
-/* ============================================================
-   QUALITY FACTORY — Arcade-style Quality Engineering game
-   Author: ChatGPT (single-file; no build)
-   ============================================================ */
+/* ===========================
+   Utility & Audio
+=========================== */
+const log = (msg) => {
+  const el = document.getElementById('log');
+  const t = new Date().toLocaleTimeString();
+  el.innerHTML = `<div class="tiny"><span style="color:#60a5fa">${t}</span> — ${msg}</div>` + el.innerHTML;
+};
+const toast = (msg)=>{const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600);};
 
-/* ---------- Deterministic RNG (for class reproducibility) ---------- */
-function mulberry32(a){return function(){var t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
-let RNG = Math.random; // will be replaced when seed != 0
-function setSeed(s){ RNG = (s && s!==0) ? mulberry32(s>>>0) : Math.random; }
-function rand(){ return RNG(); }
-function randn(){ // Box–Muller using RNG()
-  let u=0,v=0; while(u===0) u=rand(); while(v===0) v=rand();
+let AC;
+try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+function beep(freq=600, ms=120, type='sine', vol=0.05){
+  if(!AC) return;
+  const o=AC.createOscillator(), g=AC.createGain();
+  o.type=type; o.frequency.value=freq; g.gain.value=vol;
+  o.connect(g); g.connect(AC.destination); o.start();
+  setTimeout(()=>{o.stop();}, ms);
+}
+
+/* RNG */
+function randn(){
+  let u=0,v=0; while(u===0) u=Math.random(); while(v===0) v=Math.random();
   return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
 }
 function normal(mu, sigma){ return mu + sigma*randn(); }
-
-/* ---------- Sound (WebAudio beeps; no assets) ---------- */
-const AudioCtx = window.AudioContext || window.webkitAudioContext;
-let actx=null;
-function ensureAudio(){ if(!actx) actx = new AudioCtx(); }
-function beep(freq=880, dur=0.08, type='sine', vol=0.03){
-  try{
-    ensureAudio();
-    const o = actx.createOscillator(), g = actx.createGain();
-    o.type=type; o.frequency.value=freq; g.gain.value=vol;
-    o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime+dur);
-  }catch{}
-}
-
-/* ---------- DOM helpers ---------- */
-const $ = sel => document.querySelector(sel);
-const logEl = $('#log');
-function log(msg){ const t = new Date().toLocaleTimeString(); logEl.innerHTML = `<div><b>[${t}]</b> ${msg}</div>` + logEl.innerHTML; }
-function fmt2(x){ return Number(x).toFixed(2) }
-function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
-
-/* ---------- Charts ---------- */
-let xbarChart, ocChart;
-function initCharts(){
-  const ctx1 = document.getElementById('xbarChart');
-  xbarChart = new Chart(ctx1, {
-    type: 'line',
-    data: { labels: [], datasets:[
-      {label:'X̄', data:[], borderWidth:1, pointRadius:0, tension:0, fill:false},
-      {label:'UCL', data:[], borderWidth:1, pointRadius:0, borderDash:[4,4]},
-      {label:'CL',  data:[], borderWidth:1, pointRadius:0, borderDash:[4,4]},
-      {label:'LCL', data:[], borderWidth:1, pointRadius:0, borderDash:[4,4]}
-    ]},
-    options:{animation:false, responsive:true, scales:{x:{title:{display:true,text:'Subgroup index'}},y:{title:{display:true,text:'Mean'}}}, plugins:{legend:{position:'bottom'}}}
-  });
-
-  const ctx2 = document.getElementById('ocChart');
-  ocChart = new Chart(ctx2, {
-    type:'line',
-    data:{labels:[], datasets:[{label:'P(accept)', data:[], borderWidth:1, pointRadius:0, tension:0}]},
-    options:{animation:false, responsive:true, scales:{x:{title:{display:true,text:'p (fraction defective)'}}, y:{title:{display:true,text:'P(accept)'}, min:0, max:1}}, plugins:{legend:{position:'bottom'}}}
-  });
-}
-
-/* ---------- OC curve ---------- */
-const logFactCache=[0]; function ensureLogFactUpTo(n){for(let i=logFactCache.length;i<=n;i++) logFactCache[i]=logFactCache[i-1]+Math.log(i)}
-function logChoose(n,k){ if(k<0||k>n) return -Infinity; ensureLogFactUpTo(n); return logFactCache[n]-logFactCache[k]-logFactCache[n-k]; }
-function Pa(n,c,p){
-  p = clamp(p,1e-12,1-1e-12);
-  let s=0; for(let i=0;i<=c;i++){ s += Math.exp(logChoose(n,i) + i*Math.log(p) + (n-i)*Math.log(1-p)); }
-  return s;
-}
-function drawOC(n,c){
-  const xs=[], ys=[];
-  for(let p=0; p<=0.3; p+=0.005){ xs.push(+p.toFixed(3)); ys.push(Pa(n,c,p)); }
-  ocChart.data.labels = xs; ocChart.data.datasets[0].data = ys; ocChart.update();
-}
-
-/* ---------- Conveyor animation ---------- */
-const belt = $('#belt');
-const lanes = [30, 84, 138, 192]; // y positions (px)
-lanes.forEach((y,i)=>{ const d=document.createElement('div'); d.className='lane'; d.style.top = (y-26)+'px'; belt.appendChild(d) });
-
-let sprites=[]; // {el, x, y, kind}
-function spawnChip(kind='good'){
-  const el = document.createElement('div');
-  el.className = 'chip ' + kind;
-  el.innerHTML = kind==='sampling'?'🔎': (kind==='good'?'✓':'✕');
-  const lane = lanes[Math.floor(rand()*lanes.length)];
-  el.style.top = (lane-12)+'px';
-  el.style.left = '-40px';
-  belt.appendChild(el);
-  sprites.push({el, x:-40, y:lane-12, kind});
-}
-function moveSprites(dx){
-  for(const s of sprites){ s.x += dx; s.el.style.left = s.x+'px'; }
-  sprites = sprites.filter(s=>{
-    if(s.x > belt.clientWidth+40){ s.el.remove(); return false; }
-    return true;
-  });
-}
-
-/* ---------- Game state ---------- */
-const S = {
-  tickMs: 300,
-  running:false, paused:false, investigating:false,
-  time:0, // ticks
-  itemsPerTick: 6,
-  money: 500, score: 0, reputation: 3.0, // 0..5
-  // Specs & process
-  LSL:9.5, USL:10.5, mu0:10.0, mu:10.0, sigma:0.15,
-  driftPer100:0.02, // units
-  acP:0.15, acShift:1.5, // per lot, shift x sigma (random sign)
-  gagePct:6, // % of tolerance
-  g:5, N:80, n:32, c:1,
-  autoSPC:true, weAssist:false,
-  // costs
-  pricePerGood: 5.0, inspectCost: 0.05, scrapCost: 3.0, extCost: 25.0, investCost:50,
-  downtimeTicks: 8, // "4 minutes" at 2 ticks/min impression
-  // counters
-  lotIdx:0, currentLot:[], currentSubgroup:[], xbarSeries:[], resets:0,
-  lotsAccepted:0, lotsTotal:0,
-  itemsTotal:0, defectsTrue:0, escapes:0,
-  // histories for CSV
-  lotHistory:[], eventHistory:[]
-};
-
-/* ---------- KPI helpers ---------- */
-function tol(){ return S.USL - S.LSL }
-function gageSigma(){ return (S.gagePct/100) * tol() }
-function ndc(){ return 1.41*(S.sigma/Math.max(gageSigma(),1e-9)); }
-function recalcKPI(){
-  const dpmo = (S.defectsTrue/Math.max(1,S.itemsTotal))*1e6;
-  const meanAll = S.mu0 + (S.currentLot.reduce((a,x)=>a+x,0)/Math.max(1,S.currentLot.length) - S.mu0); // approx; keep simple
-  // for sd, sample last 500 items to keep perf
-  const sample = _lastItems.slice(-500);
-  const mn = sample.reduce((a,b)=>a+b,0)/Math.max(1,sample.length);
-  const varr = sample.reduce((s,x)=>s+(x-mn)*(x-mn),0)/Math.max(1,sample.length-1);
-  const sd = Math.sqrt(varr || S.sigma);
-  const cpk = Math.min((S.USL - mn)/(3*sd), (mn - S.LSL)/(3*sd));
-  const pa = S.lotsTotal ? (S.lotsAccepted / S.lotsTotal) : 0;
-  const aoq = S.itemsTotal ? (S.escapes / S.itemsTotal) : 0;
-  const totalCost = _cost.inspect + _cost.scrap + _cost.external + _cost.downtime;
-  const cpu = S.itemsTotal ? (totalCost / S.itemsTotal) : 0;
-
-  $('#k_dpmo').innerText = Math.round(dpmo).toLocaleString();
-  $('#k_cpk').innerText = (Math.round(cpk*100)/100).toFixed(2);
-  $('#k_pa').innerText = (pa*100).toFixed(1)+'%';
-  $('#k_aoq').innerText = (aoq*100).toFixed(2)+'%';
-  $('#k_resets').innerText = S.resets;
-  $('#k_cpu').innerText = '$'+(Math.round(cpu*100)/100).toFixed(2);
-
-  // reputation shifts slowly toward (5 - 150*aoq) clamped
-  const targetRep = clamp(5 - 150*aoq, 0, 5);
-  S.reputation += (targetRep - S.reputation)*0.02;
-  $('#rep').innerText = fmt2(S.reputation);
-}
-
-/* ---------- Xbar chart update ---------- */
-function updateXbarChart(){
-  const labels = S.xbarSeries.map(p=>p.i);
-  const xb = S.xbarSeries.map(p=>p.mean);
-  const UCL = xb.map(()=> S.mu0 + 3*S.sigma/Math.sqrt(S.g));
-  const CL  = xb.map(()=> S.mu0);
-  const LCL = xb.map(()=> S.mu0 - 3*S.sigma/Math.sqrt(S.g));
-
-  xbarChart.data.labels = labels;
-  xbarChart.data.datasets[0].data = xb;
-  xbarChart.data.datasets[1].data = UCL;
-  xbarChart.data.datasets[2].data = CL;
-  xbarChart.data.datasets[3].data = LCL;
-  xbarChart.update(0);
-}
-
-/* ---------- Achievements ---------- */
-const achEl = $('#ach');
-const ACH = {
-  fireFighter:{name:'Firefighter', got:false, tip:'Handle 3 OOC events by Investigate', check:()=> S.resets>=3},
-  zeroEscapes:{name:'Zero Escapes', got:false, tip:'Ship 10 lots with AOQ=0', check:()=> _lotsZeroEscape>=10},
-  sixSigma:{name:'Six Sigma Sensei', got:false, tip:'DPMO < 3.4 for 500 items', check:()=> (S.itemsTotal>=500 && (S.defectsTrue/S.itemsTotal)*1e6 < 3.4)},
-  strategist:{name:'Sampling Strategist', got:false, tip:'Pa 90–98% with AOQ < 0.5% for 15 lots', check:()=> _streakStrategist>=15},
-};
-function paintAch(){
-  achEl.innerHTML = '';
-  for(const k in ACH){
-    const a=ACH[k];
-    const el = document.createElement('div');
-    el.className='a';
-    el.textContent = (a.got?'🏆 ':'🔒 ')+a.name;
-    el.title = a.tip;
-    achEl.appendChild(el);
-  }
-}
-function checkAch(){
-  let changed=false;
-  for(const k in ACH){ const a=ACH[k]; if(!a.got && a.check()){ a.got=true; log(`🏆 Achievement unlocked: <b>${a.name}</b>`); beep(880,0.12,'square',0.05); changed=true; } }
-  if(changed) paintAch();
-}
-
-/* ---------- Game loop ---------- */
-let _timer=null, _anim=null;
-let _lastItems=[]; // ring-ish buffer of recent true values
-let _lotsZeroEscape=0, _streakStrategist=0;
-const _cost = {inspect:0, scrap:0, external:0, downtime:0};
-
-function produceOne(){
-  // drift
-  const driftPerItem = S.driftPer100/100;
-  S.mu += driftPerItem;
-
-  // make item
-  const x = normal(S.mu, S.sigma);
-  const isDef = (x < S.LSL || x > S.USL);
-  S.currentLot.push(x);
-  S.itemsTotal++;
-  if(isDef) S.defectsTrue++;
-  _lastItems.push(x); if(_lastItems.length>2000) _lastItems.shift();
-
-  // subgroup
-  S.currentSubgroup.push(x);
-  if(S.currentSubgroup.length === S.g){
-    const mean = S.currentSubgroup.reduce((a,b)=>a+b,0)/S.g;
-    S.xbarSeries.push({i:S.xbarSeries.length, mean});
-    if(S.xbarSeries.length>120) S.xbarSeries.shift();
-    updateXbarChart();
-
-    // WE Assist early warnings (Rule 1 & simple Rule 2)
-    if(S.weAssist){
-      const U = S.mu0 + 3*S.sigma/Math.sqrt(S.g);
-      const L = S.mu0 - 3*S.sigma/Math.sqrt(S.g);
-      const beyond3 = (mean > U || mean < L);
-      const last8 = S.xbarSeries.slice(-8).map(p=>p.mean);
-      const aboveCL = last8.filter(v=> v>S.mu0).length;
-      const belowCL = last8.filter(v=> v<S.mu0).length;
-      const rule2 = (aboveCL>=7 || belowCL>=7);
-      if(beyond3 || rule2){
-        if(S.autoSPC) { triggerOOC('auto'); } else { triggerOOC('manual'); }
-      }
-    }else{
-      // Basic Rule 1 only
-      const U = S.mu0 + 3*S.sigma/Math.sqrt(S.g);
-      const L = S.mu0 - 3*S.sigma/Math.sqrt(S.g);
-      if(mean>U || mean<L){
-        if(S.autoSPC) { triggerOOC('auto'); } else { triggerOOC('manual'); }
-      }
-    }
-    S.currentSubgroup = [];
-  }
-
-  // animate chip
-  spawnChip(isDef?'bad':'good');
-}
-
-function finishLot(){
-  // acceptance sampling with gage error on sampled parts
-  const N=S.N, n=S.n, c=S.c;
-  const idx = sampleWithoutReplacement(S.currentLot.length, Math.min(n, S.currentLot.length));
-  let sampleDef=0;
-  for(const i of idx){
-    const meas = S.currentLot[i] + normal(0, gageSigma());
-    if(meas < S.LSL || meas > S.USL) sampleDef++;
-  }
-  _cost.inspect += S.inspectCost * idx.length;
-
-  const trueDefInLot = S.currentLot.filter(v=> v<S.LSL || v>S.USL).length;
-  const accepted = (sampleDef <= c);
-  S.lotsTotal++;
-  if(accepted){
-    S.lotsAccepted++;
-    // ship all items: good earn revenue, defects are escapes (external failure)
-    const good = S.currentLot.length - trueDefInLot;
-    S.money += good * S.pricePerGood;
-    if(trueDefInLot>0){
-      S.escapes += trueDefInLot;
-      _cost.external += trueDefInLot * S.extCost;
-      S.reputation = clamp(S.reputation - Math.min(0.6, trueDefInLot*0.02), 0, 5);
-      log(`😬 Accepted lot had <b>${trueDefInLot}</b> defects (escapes). Reputation hit.`);
-      beep(220,0.12,'sawtooth',0.05);
-    }else{
-      S.score += 10;
-      log(`✅ Customer accepted lot. $${(good*S.pricePerGood).toFixed(2)} earned.`);
-      beep(660,0.08,'triangle',0.04);
-    }
-  } else {
-    // reject -> scrap/rework cost for whole lot
-    _cost.scrap += S.scrapCost * S.currentLot.length;
-    S.reputation = clamp(S.reputation - 0.15, 0, 5);
-    log(`🗑️ Customer rejected lot (sample defects=${sampleDef}). Scrap/rework cost applied.`);
-    beep(140,0.12,'square',0.06);
-  }
-
-  // strategist metric
-  const aoqNow = S.itemsTotal ? (S.escapes/S.itemsTotal) : 0;
-  const paNow = S.lotsTotal? (S.lotsAccepted/S.lotsTotal) : 0;
-  if(accepted && trueDefInLot===0) _lotsZeroEscape++; else _lotsZeroEscape=0;
-  if(aoqNow<0.005 && paNow>0.90 && paNow<0.98) _streakStrategist++; else _streakStrategist=0;
-
-  // lot history
-  S.lotHistory.push({lot:S.lotIdx++, size:S.currentLot.length, trueDef:trueDefInLot, sampleDef, accepted, money:S.money, reputation:S.reputation});
-  if(S.lotHistory.length>400) S.lotHistory.shift();
-
-  // reset
-  S.currentLot = [];
-}
-
 function sampleWithoutReplacement(N, n){
   n = Math.min(n, N);
   const arr = Array.from({length:N}, (_,i)=>i);
-  for(let i=0;i<n;i++){ const j=i+Math.floor(rand()*(N-i)); [arr[i], arr[j]]=[arr[j], arr[i]]; }
+  for(let i=0;i<n;i++){ const j = i + Math.floor(Math.random()*(N-i)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
   return arr.slice(0,n);
 }
 
-/* ---------- OOC modal ---------- */
-function triggerOOC(mode){
-  if(S.paused || S.investigating) return;
-  S.paused=true;
-  $('#modal').style.display='flex';
-  if(mode==='auto') log('🚨 Auto-SPC pause: Out-of-control signal detected.');
-  else log('🚨 OOC signal detected. Choose an action.');
-  beep(520,0.14,'square',0.06);
-}
-function hideModal(){ $('#modal').style.display='none'; S.paused=false; }
-$('#mInvestigate').onclick = ()=>{
-  hideModal();
-  S.investigating=true;
-  _cost.downtime += S.investCost;
-  log('🔧 Investigating… line paused; μ reset to target.');
-  S.resets++; S.mu = S.mu0;
-  setTimeout(()=>{ S.investigating=false; }, S.downtimeTicks * S.tickMs);
-};
-$('#mIgnore').onclick = ()=>{
-  hideModal();
-  log('➡ You ignored the signal. Risk of escapes increased.');
-  S.reputation = clamp(S.reputation - 0.2, 0, 5);
-};
-$('#mAuto').onclick = ()=>{
-  hideModal();
-  S.autoSPC=true;
-  log('🤖 Auto-SPC enabled.');
+/* ===========================
+   Game State
+=========================== */
+const state = {
+  running:false, over:false, t:0, roundLen:180, lastFrame:0,
+  // Process params
+  LSL:9.5, USL:10.5, mu0:10.0, sigma:0.15, driftPer100:0.02,
+  acProb:0.15, acSigmaMult:1.8,
+  // Inspection
+  lotSize:80, sampleN:40, acceptC:2, subgroupN:5, gagePctTol:7.5,
+  // Costs
+  inspectCost:0.05, scrapCost:3.0, extCost:30.0, stopCost:60.0,
+  // Derived
+  mu:10.0, sigmaCurr:0.15, gageSigma:0, driftPerItem:0.0002,
+  convRatePerMin:24, // items per minute shown (visual)
+  // Counters
+  timeLeft:180, itemsMade:0, itemsThisLot:0, lotIdx:1, acceptedLots:0, totalLots:0,
+  trueDefectsAll:0, escapesAll:0, resets:0,
+  costInspect:0, costScrap:0, costExternal:0, costStops:0, revenue:0, pricePerUnit:1.2,
+  satisfaction:70, highScore:0,
+  // SPC
+  subgroupBuf:[], xbarSeries:[], UCL:0, LCL:0, CL:0, oocFlag:false, oocSinceIdx:null,
+  // Visual
+  items:[], // animated items on conveyor
+  // Timed effects
+  maintUntil:0, calUntil:0,
+  // Logs
+  lots:[],
 };
 
-/* ---------- Actions ---------- */
-function canSpend(x){ return S.money>=x; }
-function spend(x){ if(canSpend(x)){ S.money-=x; updateMoney(); return true; } beep(150,0.12,'square',0.05); return false; }
-function updateMoney(){ $('#money').innerText = Math.round(S.money).toLocaleString(); $('#score').innerText = Math.round(S.score); }
-
-$('#actTune').onclick = ()=>{ if(spend(75)){ S.mu = S.mu0; S.driftPer100 = Math.max(0, S.driftPer100*0.9); log('🔧 Tuned machine: μ snapped to μ₀.'); beep(700,0.09,'triangle',0.05);} };
-$('#actTool').onclick = ()=>{ if(spend(200)){ S.sigma = Math.max(0.06, S.sigma*0.85); S.driftPer100*=0.75; log('🛠️ Replaced tool: σ ↓15%, drift rate ↓25%.'); beep(820,0.09,'triangle',0.05); updateXbarChart(); } };
-$('#actGage').onclick = ()=>{ if(spend(120)){ S.gagePct = Math.max(2, S.gagePct*0.75); log(`🧪 Gage calibrated: σ_gage now ${fmt2(S.gagePct)}% of Tol.`); beep(900,0.09,'sine',0.05); } };
-$('#actTrain').onclick = ()=>{ if(spend(160)){ S.acP *= 0.8; S.acShift *= 0.9; log('👷‍♀️ Operators trained: assignable P ↓20%, shift ↓10%.'); beep(760,0.09,'sine',0.05); } };
-$('#actSampler').onclick = ()=>{ if(spend(180)){ S.n = Math.min(S.N, S.n+8); S.c = Math.min(S.c, S.n); log('🤖 Auto sampler: sample size n increased by 8.'); drawOC(S.n,S.c); beep(620,0.09,'triangle',0.05);} };
-$('#actWE').onclick = ()=>{ if(spend(140)){ S.weAssist=true; log('🔍 Western Electric assist enabled (Rules 1–2).'); beep(980,0.09,'sine',0.05);} };
-
-/* ---------- Inputs listeners ---------- */
+/* Bind UI inputs */
+const $ = (id)=>document.getElementById(id);
 function bindInputs(){
-  const bind = (id, fn)=> $(id).addEventListener('input', fn);
-  bind('#LSL', e=>{ S.LSL = +e.target.value; drawOC(S.n,S.c); updateXbarChart(); });
-  bind('#USL', e=>{ S.USL = +e.target.value; drawOC(S.n,S.c); updateXbarChart(); });
-  bind('#mu0', e=>{ const d=+e.target.value; S.mu0 = d; if(Math.abs(S.mu-S.mu0)<0.3) S.mu=d; updateXbarChart(); });
-  bind('#sigma', e=>{ S.sigma = Math.max(0.03,+e.target.value); updateXbarChart(); });
-  bind('#drift', e=>{ S.driftPer100 = +e.target.value; });
-  bind('#acP', e=>{ S.acP = clamp(+e.target.value,0,1); });
-  bind('#acShift', e=>{ S.acShift = Math.max(0,+e.target.value); });
-  bind('#gagePct', e=>{ S.gagePct = Math.max(1,+e.target.value); });
-  bind('#g', e=>{ S.g = Math.max(2, +e.target.value|0); updateXbarChart(); });
-  bind('#N', e=>{ S.N = Math.max(20, +e.target.value|0); S.n = Math.min(S.n, S.N); $('#n').value=S.n; drawOC(S.n,S.c); });
-  bind('#n', e=>{ S.n = Math.max(1, Math.min(S.N, +e.target.value|0)); drawOC(S.n,S.c); });
-  bind('#c', e=>{ S.c = Math.max(0, Math.min(S.n, +e.target.value|0)); drawOC(S.n,S.c); });
-  bind('#autoSPC', e=>{ S.autoSPC = e.target.checked; });
-
-  $('#speed').addEventListener('change', e=>{
-    const mul = +e.target.value;
-    S.tickMs = 300 / mul;
-    if(S.running){ clearInterval(_timer); _timer=setInterval(tick, S.tickMs); }
-  });
-  $('#seed').addEventListener('change', e=>{
-    setSeed(+e.target.value||0);
-  });
+  const ids = ["LSL","USL","mu0","sigma","driftPer100","acProb","acSigmaMult","lotSize","sampleN","acceptC","subgroupN","gagePctTol","inspectCost","scrapCost","extCost","stopCost"];
+  for(const id of ids){
+    $(id).addEventListener('change', ()=>{
+      let v = Number($(id).value);
+      if(id==="sampleN") v = Math.max(1, Math.floor(v));
+      if(id==="acceptC") v = Math.max(0, Math.floor(v));
+      if(id==="subgroupN") v = Math.max(2, Math.floor(v));
+      state[id] = v;
+      recalcDerived();
+      displayParams();
+    });
+  }
+  $('roundLen').addEventListener('input', e=>{ $('roundLenVal').textContent = e.target.value; });
+  $('roundLen').addEventListener('change', e=>{ state.roundLen = Number(e.target.value); if(!state.running) { state.timeLeft = state.roundLen; updateTimer(); }});
+  $('playBtn').addEventListener('click', startGame);
+  $('pauseBtn').addEventListener('click', pauseGame);
+  $('resetBtn').addEventListener('click', resetGame);
+  $('exportBtn').addEventListener('click', exportCSV);
+  $('stopBtn').addEventListener('click', stopLine);
+  $('maintBtn').addEventListener('click', doMaintenance);
+  $('calBtn').addEventListener('click', calibrateGage);
+  $('closeTut').addEventListener('click', ()=>{ $('tutorial').style.display='none'; });
+  $('againBtn').addEventListener('click', ()=>{ $('gameOver').style.display='none'; resetGame(); startGame(); });
+  window.addEventListener('keydown', (e)=>{ if(e.code==='Space'){ e.preventDefault(); stopLine(); }});
 }
 
-/* ---------- Start / Pause / Reset ---------- */
-$('#startBtn').onclick = start;
-$('#pauseBtn').onclick = ()=>{ S.paused = !S.paused; $('#pauseBtn').innerText = S.paused?'▶ Resume':'⏸ Pause'; };
-$('#resetBtn').onclick = reset;
-document.addEventListener('keydown', (e)=>{
-  const k = e.key.toLowerCase();
-  if(k==='q') $('#actTune').click();
-  if(k==='w') $('#actTool').click();
-  if(k==='e') $('#actGage').click();
-  if(k==='r') $('#actTrain').click();
-  if(k==='t') $('#actSampler').click();
-  if(k==='y') $('#actWE').click();
-});
-
-function start(){
-  if(S.running) return;
-  S.running=true; S.paused=false;
-  _timer=setInterval(tick, S.tickMs);
-  function animate(){ moveSprites(3); _anim=requestAnimationFrame(animate); }
-  _anim=requestAnimationFrame(animate);
-  log('▶ Production started.');
+/* Derived params & display */
+function recalcDerived(){
+  state.gageSigma = (state.gagePctTol/100) * (state.USL - state.LSL);
+  state.driftPerItem = state.driftPer100 / 100.0;
+  state.mu = state.mu0;
+  state.sigmaCurr = state.sigma;
+  const s = state.sigmaCurr/Math.sqrt(state.subgroupN);
+  state.UCL = state.mu0 + 3*s; state.LCL = state.mu0 - 3*s; state.CL = state.mu0;
 }
-function reset(){
-  if(_timer) clearInterval(_timer); if(_anim) cancelAnimationFrame(_anim);
-  Object.assign(S, {...S, running:false, paused:false, investigating:false, time:0,
-    money:500, score:0, reputation:3.0, mu:S.mu0, currentLot:[], currentSubgroup:[],
-    xbarSeries:[], resets:0, lotsAccepted:0, lotsTotal:0, itemsTotal:0, defectsTrue:0, escapes:0,
-    lotIdx:0, lotHistory:[], eventHistory:[]});
-  _lastItems=[]; sprites.forEach(s=>s.el.remove()); sprites=[];
-  _lotsZeroEscape=0; _streakStrategist=0; _cost.inspect=0; _cost.scrap=0; _cost.external=0; _cost.downtime=0;
-  $('#belt').querySelectorAll('.chip').forEach(c=>c.remove());
-  xbarChart.data.labels=[]; xbarChart.data.datasets.forEach(d=>d.data=[]); xbarChart.update(0);
-  drawOC(S.n,S.c); recalcKPI(); updateMoney(); paintAch(); $('#pauseBtn').innerText='⏸ Pause';
-  log('↺ Reset complete. Press Start.');
+function displayParams(){
+  $('muSet').textContent = state.mu0.toFixed(2);
+  $('sigmaTag').textContent = state.sigmaCurr.toFixed(2);
+  $('gageTag').textContent = state.gagePctTol.toFixed(1);
+  $('lotIdx').textContent = state.lotIdx;
+  $('lotCount').textContent = '∞';
+  $('convRate').textContent = state.convRatePerMin;
 }
 
-/* ---------- Export CSV ---------- */
-$('#exportBtn').onclick = ()=>{
-  const lines = [];
-  lines.push('metric,value');
-  const aoq = S.itemsTotal ? S.escapes/S.itemsTotal : 0;
-  const dpmo = (S.defectsTrue/Math.max(1,S.itemsTotal))*1e6;
-  lines.push(`money,${S.money}`);
-  lines.push(`score,${S.score}`);
-  lines.push(`reputation,${S.reputation}`);
-  lines.push(`itemsTotal,${S.itemsTotal}`);
-  lines.push(`defectsTrue,${S.defectsTrue}`);
-  lines.push(`escapes,${S.escapes}`);
-  lines.push(`lotsAccepted,${S.lotsAccepted}`);
-  lines.push(`lotsTotal,${S.lotsTotal}`);
-  lines.push(`dpmo,${dpmo}`);
-  lines.push(`aoq,${aoq}`);
-  lines.push(`resets,${S.resets}`);
-  lines.push('');
-  lines.push('lots: lot,size,trueDef,sampleDef,accepted,money,rep');
-  for(const L of S.lotHistory){ lines.push([L.lot,L.size,L.trueDef,L.sampleDef,L.accepted?1:0,fmt2(L.money),fmt2(L.reputation)].join(',')); }
-  lines.push('');
-  lines.push('xbar: idx,mean');
-  for(const p of S.xbarSeries){ lines.push([p.i,p.mean].join(',')); }
-  lines.push('');
-  lines.push('events (latest first):');
-  lines.push(logEl.innerText.split('\n').join('\n'));
-  const blob = new Blob([lines.join('\n')], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download='quality_factory_run.csv'; a.click();
-  URL.revokeObjectURL(url);
+/* ===========================
+   Game Loop & Simulation
+=========================== */
+const g = {
+  game: $('gameCanvas').getContext('2d'),
+  spc: $('spcCanvas').getContext('2d'),
 };
+function startGame(){
+  if(state.over) resetGame();
+  if(!state.running){
+    state.running = true;
+    state.lastFrame = performance.now();
+    $('tutorial').style.display='none';
+    requestAnimationFrame(frame);
+  }
+}
+function pauseGame(){ state.running = false; }
+function resetGame(){
+  state.running=false; state.over=false;
+  state.timeLeft = state.roundLen; updateTimer();
+  state.itemsMade=0; state.itemsThisLot=0; state.lotIdx=1; state.acceptedLots=0; state.totalLots=0;
+  state.trueDefectsAll=0; state.escapesAll=0; state.resets=0;
+  state.costInspect=0; state.costScrap=0; state.costExternal=0; state.costStops=0; state.revenue=0;
+  state.satisfaction=70; state.oocFlag=false; state.oocSinceIdx=null;
+  state.subgroupBuf=[]; state.xbarSeries=[]; state.items=[]; state.lots=[];
+  state.maintUntil=0; state.calUntil=0;
+  recalcDerived(); displayParams(); drawAll();
+  $('timer').textContent = secToMMSS(state.timeLeft);
+  log('🔄 Game reset.');
+  $('tutorial').style.display='flex';
+}
+function frame(ts){
+  if(!state.running) return;
+  const dt = Math.min(0.06, (ts - state.lastFrame)/1000); // cap dt
+  state.lastFrame = ts;
+  tick(dt);
+  drawAll();
+  requestAnimationFrame(frame);
+}
+function tick(dt){
+  // Timer
+  state.t += dt;
+  state.timeLeft -= dt;
+  if(state.timeLeft <= 0){ endGame(); return; }
+  updateTimer();
 
-/* ---------- Tick ---------- */
-function tick(){
-  if(S.paused || S.investigating) return;
-  S.time++;
+  // Produce items according to conveyor rate
+  const itemsPerSec = state.convRatePerMin/60;
+  const toProduce = itemsPerSec*dt + g._carry || 0;
+  let nMake = Math.floor(toProduce);
+  g._carry = toProduce - nMake;
 
-  // assignable cause at the START of a lot (once)
-  if(S.currentLot.length===0 && rand()<S.acP){
-    const dir = rand()<0.5? -1: +1;
-    const shift = dir * S.acShift * S.sigma;
-    S.mu += shift;
-    log(`⚠️ Assignable cause introduced: mean shifted by ${fmt2(shift)}.`);
+  for(let k=0;k<nMake;k++) produceItem();
+
+  // Animated items movement
+  for(const it of state.items){ it.x += it.vx*dt; }
+  // remove offscreen
+  state.items = state.items.filter(it=> it.x < $('gameCanvas').width + 40);
+
+  // Effects decay
+  if(state.maintUntil>0 && performance.now() > state.maintUntil){ state.sigmaCurr = state.sigma; $('sigmaTag').textContent = state.sigmaCurr.toFixed(2); toast('🧰 Maintenance effect ended'); }
+  if(state.calUntil>0 && performance.now() > state.calUntil){ state.gagePctTol = Number($('gagePctTol').value); state.gageSigma = (state.gagePctTol/100)*(state.USL-state.LSL); $('gageTag').textContent = state.gagePctTol.toFixed(1); toast('🧪 Calibration effect ended'); }
+
+  // Satisfaction drift
+  state.satisfaction = Math.max(0, Math.min(100, state.satisfaction + 0.01*dt));
+  $('satisfactionBar').style.width = state.satisfaction + '%';
+}
+function endGame(){
+  state.running=false; state.over=true;
+  // compute summary stats
+  const N = state.lotSize * state.totalLots || 1;
+  const aoq = state.escapesAll / N;
+  const dpmo = (state.trueDefectsAll / N) * 1e6;
+  const cpk = computeCpk();
+  const inspect = state.costInspect, scrap=state.costScrap, ext=state.costExternal, stops=state.costStops;
+  const profit = state.revenue - (inspect+scrap+ext+stops);
+  if(profit > (state.highScore||0)){ state.highScore = profit; localStorage.setItem('fq_high', String(profit)); }
+  $('hs').textContent = fmtMoney(state.highScore);
+  $('summary').innerHTML = `
+    <div class="grid2">
+      <div class="stat"><h4>Profit</h4><div class="big">${fmtMoney(profit)}</div><div class="tiny">Revenue – all costs</div></div>
+      <div class="stat"><h4>AOQ</h4><div class="big">${(aoq*100).toFixed(2)}%</div><div class="tiny">Outgoing fraction defective</div></div>
+      <div class="stat"><h4>Cpk</h4><div class="big">${cpk.toFixed(2)}</div></div>
+      <div class="stat"><h4>DPMO</h4><div class="big">${Math.round(dpmo).toLocaleString()}</div></div>
+      <div class="stat"><h4>Lots Accepted</h4><div class="big">${state.acceptedLots}/${state.totalLots}</div></div>
+    </div>
+    <div class="tiny" style="margin-top:8px">
+      Costs → Inspect: ${fmtMoney(inspect)} | Scrap: ${fmtMoney(scrap)} | External: ${fmtMoney(ext)} | Downtime: ${fmtMoney(stops)}.
+    </div>
+  `;
+  $('gameOver').style.display='flex';
+}
+
+/* Produce one item, update subgroup, maybe finish lot */
+function produceItem(){
+  // Assignable cause at lot start
+  if(state.itemsThisLot===0 && Math.random() < state.acProb){
+    const shift = state.acSigmaMult * state.sigmaCurr * randn();
+    state.mu += shift;
+    log(`⚠️ Assignable cause shifted μ by ${shift.toFixed(3)}`);
+    beep(320,130,'square',0.06);
+  }
+  // Drift
+  state.mu += state.driftPerItem;
+
+  // Make item
+  const trueX = normal(state.mu, state.sigmaCurr);
+  const isDef = (trueX < state.LSL || trueX > state.USL);
+  state.trueDefectsAll += isDef ? 1 : 0;
+  state.itemsThisLot++; state.itemsMade++;
+
+  // Revenue from good unit is only realized when lot accepted (we book at shipment to keep it simple)
+  // Visual item
+  spawnVisualItem(trueX, isDef);
+
+  // SPC subgrouping
+  state.subgroupBuf.push(trueX);
+  if(state.subgroupBuf.length === state.subgroupN){
+    const mean = state.subgroupBuf.reduce((a,b)=>a+b,0)/state.subgroupN;
+    state.xbarSeries.push(mean);
+    state.subgroupBuf = [];
+    // Rule 1: point beyond 3σ/√n
+    if(mean>state.UCL || mean<state.LCL){
+      if(!state.oocFlag){ state.oocFlag=true; state.oocSinceIdx = state.xbarSeries.length-1; log('🚨 OOC detected! Hit STOP to investigate.'); toast('🚨 Out-of-Control! STOP the line!'); beep(220,220,'sawtooth',0.08); }
+    }
   }
 
-  // produce some items
-  for(let i=0;i<S.itemsPerTick;i++) produceOne();
-
-  // finish lot if size reached
-  if(S.currentLot.length >= S.N) finishLot();
-
-  // income trickle displayed
-  updateMoney();
-
-  // update charts/kpis
-  recalcKPI();
-  checkAch();
-
-  // spawn occasional sampling icon
-  if(rand()<0.05) spawnChip('sampling');
-
-  // refresh OC curve occasionally (in case inputs changed)
-  if(S.time%30===0) drawOC(S.n,S.c);
-
-  // ndc display
-  $('#ndc').innerText = fmt2(ndc());
+  // End of lot?
+  if(state.itemsThisLot >= state.lotSize){
+    finishLot();
+  }
 }
 
-/* ---------- Utilities ---------- */
-function initializeUIFromS(){
-  $('#LSL').value = S.LSL; $('#USL').value=S.USL; $('#mu0').value=S.mu0;
-  $('#sigma').value=S.sigma; $('#drift').value=S.driftPer100; $('#acP').value=S.acP; $('#acShift').value=S.acShift;
-  $('#gagePct').value=S.gagePct; $('#g').value=S.g; $('#N').value=S.N; $('#n').value=S.n; $('#c').value=S.c; $('#autoSPC').checked=S.autoSPC;
-  $('#money').innerText = Math.round(S.money); $('#score').innerText = Math.round(S.score); $('#rep').innerText = fmt2(S.reputation);
-}
-function sampleFromInputsToS(){
-  // (No-op here because we live-bind on inputs)
+/* Finish current lot: apply acceptance sampling with gage error */
+function finishLot(){
+  const L = state.lotIdx;
+  const startIdx = state.itemsMade - state.itemsThisLot;
+  const endIdx = state.itemsMade; // not used for raw items storage; we simulate sample from this lot via visual item store selection
+  // Because we don't store all true values per lot (to save memory), we estimate using sampled items + tracked defects:
+  // Here we *do* have real defects count for the lot by scanning recent visual items flagged lot=L
+  const lastLotItems = state.items.filter(it=>it.lot===L);
+  const lotDefectsTrue = lastLotItems.filter(it=>it.isDef).length;
+
+  // Sample n with gage error
+  const n = Math.min(state.sampleN, state.lotSize);
+  const idx = sampleWithoutReplacement(lastLotItems.length, n);
+  let measuredDef = 0;
+  for(const i of idx){
+    const meas = lastLotItems[i].trueX + normal(0, state.gageSigma);
+    if(meas<state.LSL || meas>state.USL) measuredDef++;
+  }
+  const accepted = (measuredDef <= state.acceptC);
+  state.costInspect += state.inspectCost * n;
+
+  if(accepted){
+    state.acceptedLots++;
+    // All true defects in accepted lot are escapes
+    state.escapesAll += lotDefectsTrue;
+    state.costExternal += lotDefectsTrue * state.extCost;
+    // Book revenue for good parts in the lot (N - true defects)
+    const good = state.lotSize - lotDefectsTrue;
+    state.revenue += good * state.pricePerUnit;
+    state.satisfaction = Math.max(0, state.satisfaction - lotDefectsTrue*0.8); // customers annoyed by escapes
+    log(`📦 Lot #${L} ACCEPTED (measured ${measuredDef} ≤ c=${state.acceptC}). Escapes:${lotDefectsTrue}.`);
+    beep(880,120,'triangle',0.07);
+  }else{
+    state.costScrap += state.scrapCost * state.lotSize;
+    state.satisfaction = Math.max(0, state.satisfaction - 3); // delays
+    log(`🗑️ Lot #${L} REJECTED (measured ${measuredDef} > c=${state.acceptC}). Scrapped.`);
+    beep(180,160,'sawtooth',0.07);
+  }
+
+  state.totalLots++;
+  // Reset lot counters
+  state.itemsThisLot = 0; state.lotIdx++; $('lotIdx').textContent = state.lotIdx;
+
+  // Achievements
+  if(state.acceptedLots>=3) unlock('✅ 3 Accepted Lots');
+  if(state.escapesAll===0 && state.totalLots>=2) unlock('🌟 Zero Escapes (so far)');
+
+  // Occasionally, auto-drift small negative to satisfaction recover
+  state.satisfaction = Math.min(100, state.satisfaction + 1.5);
 }
 
-/* ---------- Boot ---------- */
-initCharts();
+/* STOP line: costs downtime, resets μ to μ0 and clears OOC flag */
+function stopLine(){
+  // Only meaningful if OOC
+  state.costStops += state.stopCost;
+  state.mu = state.mu0;
+  state.oocFlag=false; state.oocSinceIdx=null;
+  state.resets++;
+  state.satisfaction = Math.min(100, state.satisfaction + 4);
+  log('🛑 Line stopped & centered to μ₀. OOC cleared.');
+  toast('Line investigated. Back to target.');
+  beep(520,120,'square',0.06);
+}
+
+/* Maintenance: temporarily reduce σ by 30% for 30s */
+function doMaintenance(){
+  const until = performance.now() + 30000;
+  state.sigmaCurr = Math.max(0.05, state.sigma * 0.7);
+  state.maintUntil = until;
+  $('sigmaTag').textContent = state.sigmaCurr.toFixed(2);
+  log('🧰 Maintenance: σ reduced by 30% for 30s.');
+  unlock('🧰 Preventive Strike');
+  beep(640,120,'triangle',0.06);
+}
+
+/* Calibration: temporarily halves gage %Tol for 25s */
+function calibrateGage(){
+  const until = performance.now() + 25000;
+  state.gagePctTol = Number($('gagePctTol').value);
+  const newPct = state.gagePctTol/2;
+  state.calUntil = until;
+  state.gageSigma = (newPct/100)*(state.USL-state.LSL);
+  $('gageTag').textContent = newPct.toFixed(1);
+  log('🧪 Calibration: gage σ%Tol halved for 25s.');
+  unlock('🧪 Tight Readings');
+  beep(700,100,'sine',0.05);
+}
+
+/* Visual items (conveyor) */
+let lotColorA = '#22c55e', lotColorB = '#eab308';
+function spawnVisualItem(trueX, isDef){
+  const ctx = g.game.canvas;
+  const yBase = ctx.height-60, lane = 0;
+  const it = {
+    x: -20, y: yBase - lane*22,
+    vx: 140, // px/s
+    trueX, isDef,
+    lot: state.lotIdx,
+    color: isDef ? '#ef4444' : (state.lotIdx%2 ? lotColorA : lotColorB)
+  };
+  state.items.push(it);
+}
+
+/* ===========================
+   Drawing
+=========================== */
+function drawAll(){
+  drawFactory();
+  drawSPC();
+  updateHUD();
+}
+function drawFactory(){
+  const ctx = g.game; const W = ctx.canvas.width, H = ctx.canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // floor & conveyor
+  ctx.fillStyle = '#0d1b2a'; ctx.fillRect(0,H-40,W,40);
+  ctx.fillStyle = '#0a1323'; ctx.fillRect(0,H-80,W,40);
+  // rollers
+  for(let x=0;x<W;x+=60){
+    ctx.beginPath(); ctx.arc(x+(Date.now()/30)%60, H-60, 8, 0, Math.PI*2);
+    ctx.fillStyle = '#1f2937'; ctx.fill();
+  }
+  // machine
+  ctx.fillStyle = '#142a4a'; roundRect(ctx, 20, 20, 210, 120, 12, true);
+  ctx.fillStyle = '#0d213f'; roundRect(ctx, 30, 30, 190, 60, 8, true);
+  ctx.fillStyle = '#1e3a8a'; roundRect(ctx, 30, 96, 190, 32, 8, true);
+  // gauges
+  drawGauge(ctx, 46, 44, state.mu - state.mu0, -0.5, 0.5, 'Δμ');
+  drawGauge(ctx, 114, 44, state.sigmaCurr, 0.05, 0.3, 'σ');
+  drawGauge(ctx, 182, 44, state.gageSigma, 0, (state.USL-state.LSL)*0.2, 'gage σ');
+
+  // items
+  for(const it of state.items){
+    ctx.beginPath();
+    ctx.fillStyle = it.color;
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 1.2;
+    ctx.arc(it.x, it.y, 7.5, 0, Math.PI*2);
+    ctx.fill(); ctx.stroke();
+  }
+
+  // labels
+  ctx.fillStyle = '#9ca3af';
+  ctx.fillText(`Lot #${state.lotIdx}`, W-100, 18);
+  if(state.oocFlag){
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 14px system-ui';
+    ctx.fillText('OOC! STOP!', W-110, 36);
+    ctx.font = '15px system-ui';
+  }
+}
+function roundRect(ctx,x,y,w,h,r,fill){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  if(fill) ctx.fill();
+  else ctx.stroke();
+}
+function drawGauge(ctx, cx, cy, val, vmin, vmax, label){
+  const r=12;
+  const t = Math.max(0, Math.min(1, (val-vmin)/(vmax-vmin)));
+  ctx.fillStyle = '#0b1428'; ctx.strokeStyle = '#1f2b44';
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy); const ang = -Math.PI*0.75 + 1.5*Math.PI*t; ctx.lineTo(cx + r*Math.cos(ang), cy + r*Math.sin(ang)); ctx.strokeStyle='#60a5fa'; ctx.stroke();
+  ctx.fillStyle = '#93c5fd'; ctx.font='10px system-ui'; ctx.fillText(label, cx-10, cy+26);
+}
+function drawSPC(){
+  const ctx = g.spc; const W=ctx.canvas.width, H=ctx.canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#06101b'; ctx.fillRect(0,0,W,H);
+  // axes
+  ctx.strokeStyle = '#203047'; ctx.beginPath(); ctx.moveTo(40,10); ctx.lineTo(40,H-30); ctx.lineTo(W-10,H-30); ctx.stroke();
+  // compute y scale
+  const vals = state.xbarSeries.slice(-80);
+  if(vals.length===0) return;
+  const min = Math.min(state.LCL, ...vals)-0.05;
+  const max = Math.max(state.UCL, ...vals)+0.05;
+  const yOf = v => (H-30) - (v-min)/(max-min)*(H-50);
+  const x0 = 42, dx = (W-60)/Math.max(20, vals.length);
+
+  // CL/UCL/LCL
+  ctx.strokeStyle = '#38bdf8'; drawH(ctx, yOf(state.CL), x0, W-14, [5,4]);
+  ctx.strokeStyle = '#94a3b8'; drawH(ctx, yOf(state.UCL), x0, W-14, [2,4]);
+  ctx.strokeStyle = '#94a3b8'; drawH(ctx, yOf(state.LCL), x0, W-14, [2,4]);
+
+  // series
+  ctx.strokeStyle = '#22c55e'; ctx.lineWidth=1.2; ctx.beginPath();
+  vals.forEach((m,i)=>{ const x = x0 + i*dx; const y=yOf(m); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }); ctx.stroke();
+
+  // OOC markers
+  vals.forEach((m,i)=>{ if(m>state.UCL || m<state.LCL){ const x=x0+i*dx, y=yOf(m); ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.arc(x,y,3,0,6.28); ctx.fill(); }});
+
+  // labels
+  ctx.fillStyle='#93a3b5'; ctx.font='11px system-ui';
+  ctx.fillText('X̄', 8, 14);
+  ctx.fillText('UCL', 6, yOf(state.UCL)+4);
+  ctx.fillText('CL', 6, yOf(state.CL)+4);
+  ctx.fillText('LCL', 6, yOf(state.LCL)+4);
+}
+function drawH(ctx, y, x1, x2, dash){
+  ctx.setLineDash(dash||[]); ctx.beginPath(); ctx.moveTo(x1,y); ctx.lineTo(x2,y); ctx.stroke(); ctx.setLineDash([]);
+}
+
+/* HUD updates */
+function updateHUD(){
+  // KPIs
+  const N = state.lotSize * Math.max(1, state.totalLots);
+  const aoq = (N>0) ? (state.escapesAll / N) : 0;
+  $('aoq').textContent = (aoq*100).toFixed(2)+'%';
+  $('dpmo').textContent = Math.round((state.trueDefectsAll/(N||1))*1e6).toLocaleString();
+  $('pa').textContent = (state.totalLots>0 ? (state.acceptedLots/state.totalLots*100).toFixed(1) : '—') + '%';
+  $('cpk').textContent = computeCpk().toFixed(2);
+  const profit = state.revenue - (state.costInspect + state.costScrap + state.costExternal + state.costStops);
+  $('profit').textContent = fmtMoney(profit);
+  $('hs').textContent = fmtMoney(state.highScore || Number(localStorage.getItem('fq_high')||0));
+}
+
+/* Helpers */
+function computeCpk(){
+  // Estimate from last ~400 true items using normal approx (we don't store all; sample from visuals by value)
+  const vals = state.items.slice(-400).map(v=>v.trueX);
+  if(vals.length<3) return 0;
+  const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
+  const sd = Math.sqrt(vals.reduce((s,x)=>s+(x-mean)*(x-mean),0)/(vals.length-1));
+  return Math.min((state.USL-mean)/(3*sd),(mean-state.LSL)/(3*sd)) || 0;
+}
+function fmtMoney(x){ return '$'+(Math.round(x*100)/100).toFixed(2); }
+function secToMMSS(s){ s=Math.max(0,Math.round(s)); const m=Math.floor(s/60), r=s%60; return String(m).padStart(2,'0')+':'+String(r).padStart(2,'0'); }
+function updateTimer(){ $('timer').textContent = secToMMSS(state.timeLeft); }
+
+/* Achievements */
+const got = new Set();
+function unlock(name){
+  if(got.has(name)) return;
+  got.add(name);
+  const b = document.createElement('span');
+  b.className='ach'; b.textContent=name;
+  $('achWrap').appendChild(b);
+}
+
+/* CSV Export */
+function exportCSV(){
+  const lines = [];
+  lines.push('Metric,Value');
+  lines.push(`LSL,${state.LSL}`); lines.push(`USL,${state.USL}`); lines.push(`mu0,${state.mu0}`); lines.push(`sigma,${state.sigma}`);
+  lines.push(`lotSize,${state.lotSize}`); lines.push(`sampleN,${state.sampleN}`); lines.push(`acceptC,${state.acceptC}`); lines.push(`subgroupN,${state.subgroupN}`);
+  lines.push(`gagePctTol,${state.gagePctTol}`); lines.push(`driftPer100,${state.driftPer100}`); lines.push(`acProb,${state.acProb}`); lines.push(`acSigmaMult,${state.acSigmaMult}`);
+  lines.push(`inspectCost,${state.inspectCost}`); lines.push(`scrapCost,${state.scrapCost}`); lines.push(`extCost,${state.extCost}`); lines.push(`stopCost,${state.stopCost}`);
+
+  const N = state.lotSize * Math.max(1, state.totalLots);
+  const aoq = (N>0) ? (state.escapesAll / N) : 0;
+  const dpmo = (state.trueDefectsAll/(N||1))*1e6;
+  lines.push(`AOQ,${aoq}`);
+  lines.push(`DPMO,${dpmo}`);
+  lines.push(`LotsAccepted,${state.acceptedLots}`);
+  lines.push(`TotalLots,${state.totalLots}`);
+  lines.push(`Resets,${state.resets}`);
+  lines.push(`Revenue,${state.revenue}`);
+  lines.push(`CostInspect,${state.costInspect}`);
+  lines.push(`CostScrap,${state.costScrap}`);
+  lines.push(`CostExternal,${state.costExternal}`);
+  lines.push(`CostStops,${state.costStops}`);
+  lines.push('');
+
+  lines.push('Xbar Series (most recent first)');
+  lines.push('index,xbar');
+  state.xbarSeries.forEach((m,i)=> lines.push(`${i},${m}`));
+
+  const blob = new Blob([lines.join('\n')], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='factory_quality_quest.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ===========================
+   Boot
+=========================== */
 bindInputs();
-initializeUIFromS();
-paintAch();
-drawOC(S.n,S.c);
-recalcKPI();
-setSeed(0); // default random
-log('Welcome! Set parameters, press Start, then try actions (Q,W,E,R,T,Y).');
+recalcDerived();
+displayParams();
+resetGame();
 
+/* Show tutorial on first load only */
+if(!localStorage.getItem('fq_seen')){
+  $('tutorial').style.display='flex';
+  localStorage.setItem('fq_seen','1');
+}
+
+/* Small helpers for canvas draws above */
+function drawText(ctx, txt, x,y,color='#cbd5e1',size=12){ctx.fillStyle=color;ctx.font=`${size}px system-ui`;ctx.fillText(txt,x,y);}
 </script>
 </body>
 </html>
