@@ -2,63 +2,61 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Factory Quality Quest — Learn QE by Playing</title>
+<title>TURBO STREET RACERS — QA Bug Hunt Edition</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="description" content="Arcade factory game for Quality Engineering: SPC mini-game, acceptance sampling, gage error, drift, assignable causes, AOQ, Cpk, costs, profits, achievements." />
+<meta name="description" content="Overhead neon racer with planted flaws. Students play, spot issues, and fix via prompt engineering." />
 <style>
   :root{
-    --bg:#0b1220; --panel:#0f172a; --ink:#e5e7eb; --muted:#94a3b8; --hl:#22c55e; --bad:#ef4444; --warn:#f59e0b;
-    --card:#111827; --border:#243044; --accent:#60a5fa; --shadow:0 8px 30px rgba(0,0,0,.35);
+    --bg1:#070d1a; --bg2:#0a1226; --ink:#e5e7eb; --muted:#94a3b8; --accent:#60a5fa; --good:#22c55e; --bad:#ef4444; --warn:#f59e0b;
+    --panel:#0f172a; --border:#233047; --shadow:0 10px 28px rgba(0,0,0,.35);
+    --road:#0b1423; --shoulder:#0d1b2a; --line:#1f3a5f;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:linear-gradient(180deg,#0b1220,#0a1226 50%,#0a152c);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
-  header{max-width:1200px;margin:18px auto 8px;padding:0 14px;display:flex;align-items:center;gap:14px}
+  html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+  header{max-width:1200px;margin:18px auto 8px;padding:0 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   header h1{font-size:20px;margin:0}
-  .pill{background:#0e1a33;border:1px solid var(--border);border-radius:999px;padding:4px 10px;color:var(--muted);font-size:12px}
-  .wrap{max-width:1200px;margin:0 auto;padding:0 14px 40px;display:grid;grid-template-columns:340px 1fr;gap:16px}
+  .pill{background:#0d1833;border:1px solid var(--border);border-radius:999px;padding:4px 10px;color:var(--muted);font-size:12px}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 14px 34px;display:grid;grid-template-columns:320px 1fr;gap:16px}
   @media (max-width:1050px){.wrap{grid-template-columns:1fr}}
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
   .left{padding:12px}
   .section{border:1px solid var(--border);border-radius:12px;background:#0c172e;margin:8px 0}
   .section h3{margin:0;padding:8px 10px;color:var(--muted);font-size:13px;border-bottom:1px solid var(--border)}
   .section .pad{padding:10px}
-  label{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:6px 0;color:#cdd5e1}
-  input[type="number"], input[type="range"]{width:120px;background:#0b1428;border:1px solid var(--border);color:var(--ink);padding:6px;border-radius:8px}
-  input[type="range"]{width:160px}
   .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   button{background:#14213a;border:1px solid #2b3a55;color:var(--ink);padding:10px 14px;border-radius:10px;cursor:pointer}
-  button:hover{filter:brightness(1.1)}
+  button:hover{filter:brightness(1.08)}
   button.primary{background:#16a34a;border-color:#22c55e;color:#07150f;font-weight:700}
-  button.danger{background:#7f1d1d;border-color:#ef4444}
   button.ghost{background:transparent;border-color:#334155;color:#cbd5e1}
-  .meter{height:12px;border-radius:999px;background:#0b1428;border:1px solid var(--border);overflow:hidden}
-  .meter>i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#84cc16,#f59e0b,#ef4444);width:40%}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  input[type="checkbox"]{transform:scale(1.15)}
+  .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;border:1px solid #334155;padding:1px 6px;border-radius:6px;background:#0b1428;color:#cbd5e1}
   .stat{background:#0b1428;border:1px solid var(--border);border-radius:12px;padding:10px}
   .stat h4{margin:0 0 2px;font-size:12px;color:var(--muted)}
   .stat .big{font-weight:800;font-size:22px}
   .tiny{font-size:12px;color:var(--muted)}
   .game{position:relative;min-height:560px;padding:10px}
-  .canvasWrap{background:linear-gradient(180deg,#0b1220,#0b1527);border:1px solid var(--border);border-radius:16px;padding:8px;display:grid;grid-template-rows:auto 200px 140px;gap:8px}
-  .bar{display:flex;align-items:center;justify-content:space-between;gap:8px}
-  .bar .lefty,.bar .righty{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .canvasWrap{background:#0a1321;border:1px solid var(--border);border-radius:16px;padding:8px;display:grid;grid-template-rows:auto 540px;gap:8px}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
   .tag{padding:4px 10px;border:1px solid var(--border);border-radius:999px;color:#d1d5db;background:#0e1a33}
-  canvas{background:#081018;border:1px solid var(--border);border-radius:12px}
-  .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;border:1px solid #334155;padding:1px 6px;border-radius:6px;background:#0b1428;color:#cbd5e1}
-  footer{max-width:1200px;margin:12px auto 40px;color:var(--muted);font-size:12px;padding:0 14px}
+  canvas{background:#06101b;border:1px solid var(--border);border-radius:12px}
   .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#0b1428;border:1px solid var(--border);padding:10px 14px;border-radius:10px;box-shadow:var(--shadow);opacity:0;transition:opacity .3s, transform .3s}
   .toast.show{opacity:1;transform:translate(-50%,-6px)}
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:16px}
-  .modal .box{max-width:900px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+  footer{max-width:1200px;margin:12px auto 40px;color:var(--muted);font-size:12px;padding:0 14px}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;padding:16px}
+  .modal .box{max-width:920px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
   .modal h2{margin:0 0 6px}
   .ach{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;margin:4px;border-radius:999px;border:1px solid var(--border);background:#0d162a}
+  /* On-screen controls (INTENTIONALLY cosmetic only; see ANTI-PATTERN #11) */
+  .touch{display:none;position:absolute;bottom:14px;right:14px;gap:8px}
+  .touch button{width:56px;height:56px;border-radius:50%}
+  @media (max-width:800px){.touch{display:flex}}
 </style>
 </head>
 <body>
 <header>
-  <h1>🏭 Factory Quality Quest</h1>
-  <span class="pill">Arcade + SPC + Sampling + Costs</span>
-  <span class="pill">No installs • Works on GitHub Pages</span>
+  <h1>🏁 TURBO STREET RACERS — <em>QA Bug Hunt Edition</em></h1>
+  <span class="pill">Arcade • Nitro • Traffic • Police</span>
+  <span class="pill">Built to be fun… with deliberate flaws</span>
 </header>
 
 <div class="wrap">
@@ -70,78 +68,36 @@
         <button class="primary" id="playBtn">▶ Play</button>
         <button class="ghost" id="pauseBtn">⏸ Pause</button>
         <button class="ghost" id="resetBtn">↻ Reset</button>
-        <button id="exportBtn" class="ghost">⬇ Export CSV</button>
+        <button class="ghost" id="exportBtn">⬇ Export CSV</button>
+      </div>
+      <div class="pad tiny">
+        Steer: <span class="kbd">←/→</span> or <span class="kbd">A/D</span> • Throttle: <span class="kbd">↑/↓</span> • Nitro: <span class="kbd">Space</span> • Pause: <span class="kbd">P</span> • Missions: <span class="kbd">M</span>
       </div>
       <div class="pad row tiny">
-        <span>Round length</span>
-        <input type="range" id="roundLen" min="60" max="300" value="180" />
-        <span><span id="roundLenVal">180</span>s</span>
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>Process & Spec</h3>
-      <div class="pad">
-        <label>LSL <input type="number" id="LSL" step="0.01" value="9.5"></label>
-        <label>USL <input type="number" id="USL" step="0.01" value="10.5"></label>
-        <label>Target μ<sub>0</sub> <input type="number" id="mu0" step="0.01" value="10.0"></label>
-        <label>Process σ <input type="number" id="sigma" step="0.01" value="0.15"></label>
-        <label>Drift / 100 items <input type="number" id="driftPer100" step="0.005" value="0.02"></label>
-        <label>Assignable cause prob/lot <input type="number" id="acProb" step="0.01" value="0.15"></label>
-        <label>Assignable shift (×σ) <input type="number" id="acSigmaMult" step="0.1" value="1.8"></label>
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>Inspection & Costs</h3>
-      <div class="pad">
-        <div class="grid2">
-          <label>Lot size (N)<input type="number" id="lotSize" value="80" min="10"></label>
-          <label>Sample n<input type="number" id="sampleN" value="40" min="1"></label>
-          <label>Accept c<input type="number" id="acceptC" value="2" min="0"></label>
-          <label>Subgroup size n̄<input type="number" id="subgroupN" value="5" min="2"></label>
-        </div>
-        <label>Gage σ as %Tol <input type="number" id="gagePctTol" value="7.5" step="0.1"></label>
-        <div class="grid2">
-          <label>Inspect $/sample <input type="number" id="inspectCost" value="0.05" step="0.01"></label>
-          <label>Scrap $/part <input type="number" id="scrapCost" value="3.00" step="0.01"></label>
-          <label>External failure $/escape <input type="number" id="extCost" value="30.00" step="0.01"></label>
-          <label>Downtime $/stop <input type="number" id="stopCost" value="60.00" step="0.01"></label>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <button id="stopBtn" class="danger">🛑 STOP LINE (<span class="kbd">Space</span>)</button>
-          <button id="maintBtn">🧰 Maintenance (reduce σ)</button>
-          <button id="calBtn">🧪 Calibrate Gage</button>
-        </div>
+        <label class="row" style="gap:6px"><input type="checkbox" id="sfxOn" checked /> SFX</label>
+        <label class="row" style="gap:6px"><input type="checkbox" id="shakeOn" checked /> Screen shake</label>
       </div>
     </div>
 
     <div class="section">
       <h3>Scoreboard</h3>
-      <div class="pad grid2">
-        <div class="stat"><h4>Timer</h4><div class="big" id="timer">03:00</div><div class="tiny">Round length</div></div>
-        <div class="stat"><h4>Profit</h4><div class="big" id="profit">$0</div><div class="tiny">Revenue − costs</div></div>
-        <div class="stat"><h4>Cpk</h4><div class="big" id="cpk">—</div><div class="tiny">Capability</div></div>
-        <div class="stat"><h4>AOQ</h4><div class="big" id="aoq">—</div><div class="tiny">Outgoing fraction defective</div></div>
-        <div class="stat"><h4>% Accepted</h4><div class="big" id="pa">—</div><div class="tiny">Lots accepted</div></div>
-        <div class="stat"><h4>DPMO</h4><div class="big" id="dpmo">—</div><div class="tiny">Defects per million</div></div>
+      <div class="pad" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="stat"><h4>Score</h4><div class="big" id="score">0</div><div class="tiny">+ distance</div></div>
+        <div class="stat"><h4>Nitro</h4><div class="big" id="nitro">—</div><div class="tiny">hold Space</div></div>
+        <div class="stat"><h4>Hits</h4><div class="big" id="hits">0</div><div class="tiny">3 = busted</div></div>
+        <div class="stat"><h4>Time</h4><div class="big" id="timer">02:00</div><div class="tiny">round length</div></div>
       </div>
       <div class="pad">
-        <div class="tiny">Customer satisfaction</div>
-        <div class="meter"><i id="satisfactionBar" style="width:60%"></i></div>
-      </div>
-      <div class="pad tiny">
-        <div>High score: <b id="hs">$0</b></div>
+        <div class="tiny">High score: <b id="hs">0</b></div>
         <div id="achWrap" style="margin-top:6px"></div>
       </div>
     </div>
 
     <div class="section">
-      <h3>In-class challenges</h3>
+      <h3>QA Missions (Press M)</h3>
       <div class="pad tiny">
-        Try: Change \((n,c)\) and gage %Tol; keep AOQ &lt; 1% while maximizing Profit.  
-        Bonus: Hit STOP within 3 subgroups after an OOC point.  
-        Advanced: Design your own double-sampling logic (n₁,c₁,n₂,c₂) and show AOQ ↓.
+        Play and list what feels unfair, clunky, or broken.  
+        Then craft prompts to patch those exact places (tags in code).
       </div>
     </div>
   </div>
@@ -150,48 +106,37 @@
   <div class="panel game">
     <div class="canvasWrap">
       <div class="bar">
-        <div class="lefty">
-          <span class="tag">Conveyor: <b id="convRate">24</b> items/min</span>
-          <span class="tag">Setpoint μ<span id="muSet">10.00</span></span>
-          <span class="tag">σ<span id="sigmaTag">0.15</span> | Gage σ%Tol <span id="gageTag">7.5</span></span>
-          <span class="tag">Lot <b>#<span id="lotIdx">1</span></b>/<span id="lotCount">∞</span></span>
-        </div>
-        <div class="righty">
-          <span class="tag">OOC detected? Watch X̄ → <b class="tiny">hit STOP fast!</b></span>
+        <div class="tag">Police rubberband & hitboxes are… “spicy” on purpose.</div>
+        <div class="tag">Round: <b id="roundName">Neon Express</b></div>
+      </div>
+      <div style="position:relative">
+        <canvas id="game" width="960" height="540" aria-label="Turbo racer canvas"></canvas>
+        <!-- Cosmetic-only touch controls (ANTI-PATTERN #11: not wired) -->
+        <div class="touch" id="touch">
+          <button>⬅</button><button>⬆</button><button>⬇</button><button>➡</button><button>🔥</button>
         </div>
       </div>
-
-      <!-- Main animation canvas -->
-      <canvas id="gameCanvas" width="920" height="260" aria-label="Factory conveyor"></canvas>
-
-      <!-- Xbar SPC canvas -->
-      <canvas id="spcCanvas" width="920" height="200" aria-label="SPC chart"></canvas>
-
-      <!-- Log -->
-      <div style="border:1px solid var(--border);border-radius:12px;padding:8px;height:130px;overflow:auto;background:#0b1422" id="log"></div>
     </div>
   </div>
 </div>
 
 <footer>
-  Tip: Press <span class="kbd">Space</span> to STOP LINE when the X̄ chart shows a point beyond UCL/LCL (Western Electric Rule 1).  
-  Lots are sampled with your \((n,c)\) plan. Accepting ships all defects → external failure cost; rejecting scraps whole lot.  
-  Maintenance temporarily reduces σ; Calibrate temporarily reduces gage error.
+  This build intentionally includes questionable choices (documented in code). Students identify, then fix via prompt engineering (write precise diffs against <code>index.html</code>).
 </footer>
 
-<!-- Tutorial / End modals -->
-<div class="modal" id="tutorial">
+<!-- Modals -->
+<div class="modal" id="missions">
   <div class="box">
-    <h2>Welcome to <em>Factory Quality Quest</em> 🎮</h2>
-    <p>Produce lots, keep customers happy, and maximize profit by managing variation and inspection.</p>
-    <ul>
-      <li><b>SPC mini-game:</b> Watch the X̄ chart. If a point goes outside UCL/LCL (OOC), press <b>STOP LINE</b> (or Space) quickly.</li>
-      <li><b>Acceptance sampling:</b> Pick <code>n</code> and <code>c</code>. Measured defects use your gage error; accepted lots ship all true defects (escapes).</li>
-      <li><b>Events:</b> Assignable causes shift μ; drift slowly moves the process. Maintenance reduces σ; Calibration improves gage temporarily.</li>
+    <h2>QA Missions (discover & fix)</h2>
+    <ul class="tiny">
+      <li>Steering & Nitro responsiveness</li>
+      <li>Unfair spawns & collisions</li>
+      <li>Rubberbanding & police logic</li>
+      <li>Pause behavior & timers</li>
+      <li>Particle performance & SFX volume</li>
+      <li>Touch/mobile controls & accessibility</li>
     </ul>
-    <div class="row" style="justify-content:flex-end;margin-top:8px">
-      <button id="closeTut" class="primary">Let’s play</button>
-    </div>
+    <div class="row" style="justify-content:flex-end;margin-top:8px"><button id="closeM" class="primary">Close</button></div>
   </div>
 </div>
 
@@ -199,552 +144,482 @@
   <div class="box">
     <h2>Round Complete</h2>
     <div id="summary"></div>
-    <div class="row" style="justify-content:flex-end;margin-top:8px">
-      <button id="againBtn" class="primary">Play again</button>
-    </div>
+    <div class="row" style="justify-content:flex-end;margin-top:8px"><button id="againBtn" class="primary">Play again</button></div>
   </div>
 </div>
 
 <div class="toast" id="toast">Hello</div>
 
 <script>
-/* ===========================
-   Utility & Audio
-=========================== */
-const log = (msg) => {
-  const el = document.getElementById('log');
-  const t = new Date().toLocaleTimeString();
-  el.innerHTML = `<div class="tiny"><span style="color:#60a5fa">${t}</span> — ${msg}</div>` + el.innerHTML;
-};
-const toast = (msg)=>{const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600);};
+/* =========================================================
+   TURBO STREET RACERS — QA Bug Hunt
+   Overhead racer with deliberately "bad" features.
+   Controls: Arrow keys / WASD, Space = Nitro, P pause, M missions
+========================================================= */
+
+/* ========= Utilities ========= */
+const $ = id => document.getElementById(id);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const rand = (a,b)=>Math.random()*(b-a)+a;
+const randi = (a,b)=>Math.floor(rand(a,b+1));
+const now = ()=>performance.now();
+const toast = (msg)=>{const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1400);};
 
 let AC;
 try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
-function beep(freq=600, ms=120, type='sine', vol=0.05){
-  if(!AC) return;
+function beep(freq=720, ms=120, type='sine', vol=0.28){ // ANTI-PATTERN #6: volume too high & ignores SFX toggle
+  if(!AC /* || !$('sfxOn').checked */) return; // FIXME: honor checkbox
   const o=AC.createOscillator(), g=AC.createGain();
   o.type=type; o.frequency.value=freq; g.gain.value=vol;
   o.connect(g); g.connect(AC.destination); o.start();
   setTimeout(()=>{o.stop();}, ms);
 }
 
-/* RNG */
-function randn(){
-  let u=0,v=0; while(u===0) u=Math.random(); while(v===0) v=Math.random();
-  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
-}
-function normal(mu, sigma){ return mu + sigma*randn(); }
-function sampleWithoutReplacement(N, n){
-  n = Math.min(n, N);
-  const arr = Array.from({length:N}, (_,i)=>i);
-  for(let i=0;i<n;i++){ const j = i + Math.floor(Math.random()*(N-i)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
-  return arr.slice(0,n);
-}
-
-/* ===========================
-   Game State
-=========================== */
-const state = {
-  running:false, over:false, t:0, roundLen:180, lastFrame:0,
-  // Process params
-  LSL:9.5, USL:10.5, mu0:10.0, sigma:0.15, driftPer100:0.02,
-  acProb:0.15, acSigmaMult:1.8,
-  // Inspection
-  lotSize:80, sampleN:40, acceptC:2, subgroupN:5, gagePctTol:7.5,
-  // Costs
-  inspectCost:0.05, scrapCost:3.0, extCost:30.0, stopCost:60.0,
-  // Derived
-  mu:10.0, sigmaCurr:0.15, gageSigma:0, driftPerItem:0.0002,
-  convRatePerMin:24, // items per minute shown (visual)
-  // Counters
-  timeLeft:180, itemsMade:0, itemsThisLot:0, lotIdx:1, acceptedLots:0, totalLots:0,
-  trueDefectsAll:0, escapesAll:0, resets:0,
-  costInspect:0, costScrap:0, costExternal:0, costStops:0, revenue:0, pricePerUnit:1.2,
-  satisfaction:70, highScore:0,
-  // SPC
-  subgroupBuf:[], xbarSeries:[], UCL:0, LCL:0, CL:0, oocFlag:false, oocSinceIdx:null,
-  // Visual
-  items:[], // animated items on conveyor
-  // Timed effects
-  maintUntil:0, calUntil:0,
-  // Logs
-  lots:[],
+/* ========= Game State ========= */
+const G = {
+  running:false, over:false, paused:false,
+  W:960, H:540, last:0, dt:0, t:0,
+  // Round
+  roundLen:120000, endAt:0,
+  // Road
+  roadX:180, roadW:600, laneN:3, laneX:[], stripeY:0,
+  // Player
+  p:{x:480,y:420,w:54,h:96, rHitX:62, rHitY:110, // ANTI-PATTERN #1: hitbox bigger than sprite (unfair)
+     vx:0, vy:0, speed:220, maxSpeed:360, nitro:100, nitroUntil:0, slipUntil:0, hits:0 },
+  // Police
+  policeY:640, policeCatch:0, // distance behind screen; lower is closer
+  // Entities
+  cars:[], coins:[], cones:[], particles:[],
+  keys:{}, score:0, high: Number(localStorage.getItem('tsr_high')||0),
+  // Spawners (intervals ignore pause) // ANTI-PATTERN #8
+  ivCars:null, ivCoins:null, ivCones:null, ivScoreTick:null,
+  // Shake
+  shakeA:0, shakeT:0,
+  // CSV
+  events:[]
 };
 
-/* Bind UI inputs */
-const $ = (id)=>document.getElementById(id);
-function bindInputs(){
-  const ids = ["LSL","USL","mu0","sigma","driftPer100","acProb","acSigmaMult","lotSize","sampleN","acceptC","subgroupN","gagePctTol","inspectCost","scrapCost","extCost","stopCost"];
-  for(const id of ids){
-    $(id).addEventListener('change', ()=>{
-      let v = Number($(id).value);
-      if(id==="sampleN") v = Math.max(1, Math.floor(v));
-      if(id==="acceptC") v = Math.max(0, Math.floor(v));
-      if(id==="subgroupN") v = Math.max(2, Math.floor(v));
-      state[id] = v;
-      recalcDerived();
-      displayParams();
-    });
-  }
-  $('roundLen').addEventListener('input', e=>{ $('roundLenVal').textContent = e.target.value; });
-  $('roundLen').addEventListener('change', e=>{ state.roundLen = Number(e.target.value); if(!state.running) { state.timeLeft = state.roundLen; updateTimer(); }});
-  $('playBtn').addEventListener('click', startGame);
-  $('pauseBtn').addEventListener('click', pauseGame);
-  $('resetBtn').addEventListener('click', resetGame);
-  $('exportBtn').addEventListener('click', exportCSV);
-  $('stopBtn').addEventListener('click', stopLine);
-  $('maintBtn').addEventListener('click', doMaintenance);
-  $('calBtn').addEventListener('click', calibrateGage);
-  $('closeTut').addEventListener('click', ()=>{ $('tutorial').style.display='none'; });
-  $('againBtn').addEventListener('click', ()=>{ $('gameOver').style.display='none'; resetGame(); startGame(); });
-  window.addEventListener('keydown', (e)=>{ if(e.code==='Space'){ e.preventDefault(); stopLine(); }});
-}
+/* ========= Canvas ========= */
+const canvas = $('game');
+const ctx = canvas.getContext('2d');
 
-/* Derived params & display */
-function recalcDerived(){
-  state.gageSigma = (state.gagePctTol/100) * (state.USL - state.LSL);
-  state.driftPerItem = state.driftPer100 / 100.0;
-  state.mu = state.mu0;
-  state.sigmaCurr = state.sigma;
-  const s = state.sigmaCurr/Math.sqrt(state.subgroupN);
-  state.UCL = state.mu0 + 3*s; state.LCL = state.mu0 - 3*s; state.CL = state.mu0;
-}
-function displayParams(){
-  $('muSet').textContent = state.mu0.toFixed(2);
-  $('sigmaTag').textContent = state.sigmaCurr.toFixed(2);
-  $('gageTag').textContent = state.gagePctTol.toFixed(1);
-  $('lotIdx').textContent = state.lotIdx;
-  $('lotCount').textContent = '∞';
-  $('convRate').textContent = state.convRatePerMin;
-}
+/* ========= Input ========= */
+window.addEventListener('keydown', e=>{
+  if(e.code==='KeyP'){togglePause(); return;}
+  if(e.code==='KeyM'){showMissions(); return;}
+  if(e.code==='Space'){doNitro(); e.preventDefault(); return;}
+  G.keys[e.code] = true;
+});
+window.addEventListener('keyup', e=>{ G.keys[e.code] = false; });
 
-/* ===========================
-   Game Loop & Simulation
-=========================== */
-const g = {
-  game: $('gameCanvas').getContext('2d'),
-  spc: $('spcCanvas').getContext('2d'),
-};
-function startGame(){
-  if(state.over) resetGame();
-  if(!state.running){
-    state.running = true;
-    state.lastFrame = performance.now();
-    $('tutorial').style.display='none';
-    requestAnimationFrame(frame);
-  }
+/* ========= Lifecycle ========= */
+$('playBtn').addEventListener('click', start);
+$('pauseBtn').addEventListener('click', togglePause);
+$('resetBtn').addEventListener('click', reset);
+$('exportBtn').addEventListener('click', exportCSV);
+$('closeM').addEventListener('click', ()=>$('missions').style.display='none');
+$('againBtn').addEventListener('click', ()=>{ $('gameOver').style.display='none'; reset(); start(); });
+
+function start(){
+  if(G.running) return;
+  if(G.over) reset();
+  G.running = true; G.paused=false; G.t=0; G.last=now(); G.endAt = G.last + G.roundLen;
+  setupRoad();
+  clearIntervals(); setupIntervals(); // ANTI-PATTERN #8: intervals keep firing while paused
+  requestAnimationFrame(loop);
+  toast('Steer through traffic. Space = Nitro!');
 }
-function pauseGame(){ state.running = false; }
-function resetGame(){
-  state.running=false; state.over=false;
-  state.timeLeft = state.roundLen; updateTimer();
-  state.itemsMade=0; state.itemsThisLot=0; state.lotIdx=1; state.acceptedLots=0; state.totalLots=0;
-  state.trueDefectsAll=0; state.escapesAll=0; state.resets=0;
-  state.costInspect=0; state.costScrap=0; state.costExternal=0; state.costStops=0; state.revenue=0;
-  state.satisfaction=70; state.oocFlag=false; state.oocSinceIdx=null;
-  state.subgroupBuf=[]; state.xbarSeries=[]; state.items=[]; state.lots=[];
-  state.maintUntil=0; state.calUntil=0;
-  recalcDerived(); displayParams(); drawAll();
-  $('timer').textContent = secToMMSS(state.timeLeft);
-  log('🔄 Game reset.');
-  $('tutorial').style.display='flex';
+function reset(){
+  G.running=false; G.over=false; G.paused=false; G.t=0;
+  G.p = {...G.p, x:G.W/2, y:420, vx:0, vy:0, nitro:100, nitroUntil:0, slipUntil:0, hits:0};
+  G.cars.length=0; G.coins.length=0; G.cones.length=0; G.particles.length=0;
+  G.score=0; G.stripeY=0; G.policeY=640; G.policeCatch=0; G.events=[];
+  G.last=now(); G.endAt=G.last+G.roundLen;
+  setupRoad(); clearIntervals(); setupIntervals(); updateHUD(); draw();
 }
-function frame(ts){
-  if(!state.running) return;
-  const dt = Math.min(0.06, (ts - state.lastFrame)/1000); // cap dt
-  state.lastFrame = ts;
-  tick(dt);
-  drawAll();
-  requestAnimationFrame(frame);
-}
-function tick(dt){
-  // Timer
-  state.t += dt;
-  state.timeLeft -= dt;
-  if(state.timeLeft <= 0){ endGame(); return; }
-  updateTimer();
-
-  // Produce items according to conveyor rate
-  const itemsPerSec = state.convRatePerMin/60;
-  const toProduce = itemsPerSec*dt + g._carry || 0;
-  let nMake = Math.floor(toProduce);
-  g._carry = toProduce - nMake;
-
-  for(let k=0;k<nMake;k++) produceItem();
-
-  // Animated items movement
-  for(const it of state.items){ it.x += it.vx*dt; }
-  // remove offscreen
-  state.items = state.items.filter(it=> it.x < $('gameCanvas').width + 40);
-
-  // Effects decay
-  if(state.maintUntil>0 && performance.now() > state.maintUntil){ state.sigmaCurr = state.sigma; $('sigmaTag').textContent = state.sigmaCurr.toFixed(2); toast('🧰 Maintenance effect ended'); }
-  if(state.calUntil>0 && performance.now() > state.calUntil){ state.gagePctTol = Number($('gagePctTol').value); state.gageSigma = (state.gagePctTol/100)*(state.USL-state.LSL); $('gageTag').textContent = state.gagePctTol.toFixed(1); toast('🧪 Calibration effect ended'); }
-
-  // Satisfaction drift
-  state.satisfaction = Math.max(0, Math.min(100, state.satisfaction + 0.01*dt));
-  $('satisfactionBar').style.width = state.satisfaction + '%';
-}
-function endGame(){
-  state.running=false; state.over=true;
-  // compute summary stats
-  const N = state.lotSize * state.totalLots || 1;
-  const aoq = state.escapesAll / N;
-  const dpmo = (state.trueDefectsAll / N) * 1e6;
-  const cpk = computeCpk();
-  const inspect = state.costInspect, scrap=state.costScrap, ext=state.costExternal, stops=state.costStops;
-  const profit = state.revenue - (inspect+scrap+ext+stops);
-  if(profit > (state.highScore||0)){ state.highScore = profit; localStorage.setItem('fq_high', String(profit)); }
-  $('hs').textContent = fmtMoney(state.highScore);
+function gameOver(){
+  G.running=false; G.over=true; clearIntervals();
+  const sec = Math.round(G.roundLen/1000);
   $('summary').innerHTML = `
-    <div class="grid2">
-      <div class="stat"><h4>Profit</h4><div class="big">${fmtMoney(profit)}</div><div class="tiny">Revenue – all costs</div></div>
-      <div class="stat"><h4>AOQ</h4><div class="big">${(aoq*100).toFixed(2)}%</div><div class="tiny">Outgoing fraction defective</div></div>
-      <div class="stat"><h4>Cpk</h4><div class="big">${cpk.toFixed(2)}</div></div>
-      <div class="stat"><h4>DPMO</h4><div class="big">${Math.round(dpmo).toLocaleString()}</div></div>
-      <div class="stat"><h4>Lots Accepted</h4><div class="big">${state.acceptedLots}/${state.totalLots}</div></div>
-    </div>
-    <div class="tiny" style="margin-top:8px">
-      Costs → Inspect: ${fmtMoney(inspect)} | Scrap: ${fmtMoney(scrap)} | External: ${fmtMoney(ext)} | Downtime: ${fmtMoney(stops)}.
-    </div>
+    <div class="stat"><h4>Score</h4><div class="big">${G.score}</div></div>
+    <div class="stat"><h4>Time</h4><div class="big">${sec}s</div></div>
+    <div class="stat"><h4>Hits</h4><div class="big">${G.p.hits}/3</div></div>
   `;
+  if(G.score > G.high){ G.high = G.score; localStorage.setItem('tsr_high', G.high); }
+  $('hs').textContent = G.high;
   $('gameOver').style.display='flex';
 }
 
-/* Produce one item, update subgroup, maybe finish lot */
-function produceItem(){
-  // Assignable cause at lot start
-  if(state.itemsThisLot===0 && Math.random() < state.acProb){
-    const shift = state.acSigmaMult * state.sigmaCurr * randn();
-    state.mu += shift;
-    log(`⚠️ Assignable cause shifted μ by ${shift.toFixed(3)}`);
-    beep(320,130,'square',0.06);
+function togglePause(){
+  if(!G.running) return;
+  G.paused = !G.paused;
+  toast(G.paused? 'Paused' : 'Resumed');
+}
+
+/* ========= Road & Lanes ========= */
+function setupRoad(){
+  G.laneX = [];
+  const laneW = G.roadW / G.laneN;
+  for(let i=0;i<G.laneN;i++){
+    G.laneX.push(G.roadX + laneW*(i+0.5));
   }
-  // Drift
-  state.mu += state.driftPerItem;
+}
 
-  // Make item
-  const trueX = normal(state.mu, state.sigmaCurr);
-  const isDef = (trueX < state.LSL || trueX > state.USL);
-  state.trueDefectsAll += isDef ? 1 : 0;
-  state.itemsThisLot++; state.itemsMade++;
+/* ========= Spawners ========= */
+// NOTE: Using setInterval leads to timers continuing during pause (ANTI-PATTERN #8).
+function setupIntervals(){
+  G.ivCars = setInterval(spawnTraffic, 800);
+  G.ivCoins = setInterval(spawnCoin, 600);
+  G.ivCones = setInterval(spawnCone, 2200);
+  G.ivScoreTick = setInterval(()=>{ G.score += 5; updateHUD(); }, 250); // ANTI-PATTERN #9: score keeps increasing while paused
+}
+function clearIntervals(){
+  [ 'ivCars','ivCoins','ivCones','ivScoreTick' ].forEach(k=>{ if(G[k]){ clearInterval(G[k]); G[k]=null; }});
+}
 
-  // Revenue from good unit is only realized when lot accepted (we book at shipment to keep it simple)
-  // Visual item
-  spawnVisualItem(trueX, isDef);
+/* ========= Loop ========= */
+function loop(ts){
+  if(!G.running){ return; }
+  const elapsed = ts - G.last;
 
-  // SPC subgrouping
-  state.subgroupBuf.push(trueX);
-  if(state.subgroupBuf.length === state.subgroupN){
-    const mean = state.subgroupBuf.reduce((a,b)=>a+b,0)/state.subgroupN;
-    state.xbarSeries.push(mean);
-    state.subgroupBuf = [];
-    // Rule 1: point beyond 3σ/√n
-    if(mean>state.UCL || mean<state.LCL){
-      if(!state.oocFlag){ state.oocFlag=true; state.oocSinceIdx = state.xbarSeries.length-1; log('🚨 OOC detected! Hit STOP to investigate.'); toast('🚨 Out-of-Control! STOP the line!'); beep(220,220,'sawtooth',0.08); }
+  // ANTI-PATTERN #4: 30 FPS cap & fixed dt (sluggish on fast monitors)
+  if(elapsed < 33){ requestAnimationFrame(loop); return; }
+  G.dt = 0.033; // ignores true dt
+  G.t += G.dt; G.last = ts;
+
+  if(!G.paused){ update(G.dt); }
+  draw();
+
+  if(ts >= G.endAt || G.p.hits>=3){ gameOver(); return; }
+  requestAnimationFrame(loop);
+}
+
+/* ========= Update ========= */
+function update(dt){
+  // Road scroll
+  G.stripeY += 320*dt;
+
+  // Player control (with intentional input lag on steering) // ANTI-PATTERN #2
+  const steerLeft = G.keys['ArrowLeft']||G.keys['KeyA'];
+  const steerRight = G.keys['ArrowRight']||G.keys['KeyD'];
+  const acc = (G.keys['ArrowUp']||G.keys['KeyW']) ? 1 : (G.keys['ArrowDown']||G.keys['KeyS']) ? -1 : 0;
+
+  // Speed
+  const maxSp = (G.p.nitroUntil>now()? G.p.maxSpeed*1.55 : G.p.maxSpeed); // ANTI-PATTERN #7: Nitro is overpowered + too long elsewhere
+  G.p.speed = clamp(G.p.speed + acc*180*dt, 120, maxSp);
+  const slip = (G.p.slipUntil>now()) ? 1.6 : 1.0;
+
+  // Intentional steering delay
+  if(steerLeft){ delayedSteer(-1*slip); }
+  if(steerRight){ delayedSteer(+1*slip); }
+
+  // Move
+  G.p.x = clamp(G.p.x + G.p.vx*dt, G.roadX+30, G.roadX+G.roadW-30);
+  G.p.y = clamp(G.p.y + (G.p.vy||0)*dt, 120, G.H-20);
+
+  // Traffic moves down relative to player speed
+  const rel = G.p.speed;
+  for(const c of G.cars){ c.y += (rel*0.9 + c.v)*dt; }
+  for(const co of G.coins){ co.y += (rel*0.85)*dt; }
+  for(const cn of G.cones){ cn.y += (rel*0.88)*dt; }
+
+  // Remove offscreen
+  G.cars = G.cars.filter(c=>c.y < G.H+140);
+  G.coins = G.coins.filter(c=>c.y < G.H+60);
+  G.cones = G.cones.filter(c=>c.y < G.H+60);
+
+  // Collisions (uses inflated AABB) // ANTI-PATTERN #1/#10
+  for(let i=G.cars.length-1;i>=0;i--){
+    if(aabbHit(G.p, G.cars[i])){
+      hitCrash('car'); G.cars.splice(i,1);
+      break;
+    }
+  }
+  for(let i=G.cones.length-1;i>=0;i--){
+    if(aabbHit(G.p, G.cones[i])){
+      G.p.slipUntil = now()+1600; // oil/cone slip
+      spawnBurst(G.cones[i].x, G.cones[i].y, '#f59e0b');
+      beep(260,140,'triangle');
+      G.cones.splice(i,1);
+      break;
+    }
+  }
+  for(let i=G.coins.length-1;i>=0;i--){
+    if(aabbCollect(G.p, G.coins[i])){
+      G.score += 50;
+      spawnBurst(G.coins[i].x, G.coins[i].y, '#22c55e');
+      beep(880,100,'square');
+      G.coins.splice(i,1);
     }
   }
 
-  // End of lot?
-  if(state.itemsThisLot >= state.lotSize){
-    finishLot();
-  }
-}
-
-/* Finish current lot: apply acceptance sampling with gage error */
-function finishLot(){
-  const L = state.lotIdx;
-  const startIdx = state.itemsMade - state.itemsThisLot;
-  const endIdx = state.itemsMade; // not used for raw items storage; we simulate sample from this lot via visual item store selection
-  // Because we don't store all true values per lot (to save memory), we estimate using sampled items + tracked defects:
-  // Here we *do* have real defects count for the lot by scanning recent visual items flagged lot=L
-  const lastLotItems = state.items.filter(it=>it.lot===L);
-  const lotDefectsTrue = lastLotItems.filter(it=>it.isDef).length;
-
-  // Sample n with gage error
-  const n = Math.min(state.sampleN, state.lotSize);
-  const idx = sampleWithoutReplacement(lastLotItems.length, n);
-  let measuredDef = 0;
-  for(const i of idx){
-    const meas = lastLotItems[i].trueX + normal(0, state.gageSigma);
-    if(meas<state.LSL || meas>state.USL) measuredDef++;
-  }
-  const accepted = (measuredDef <= state.acceptC);
-  state.costInspect += state.inspectCost * n;
-
-  if(accepted){
-    state.acceptedLots++;
-    // All true defects in accepted lot are escapes
-    state.escapesAll += lotDefectsTrue;
-    state.costExternal += lotDefectsTrue * state.extCost;
-    // Book revenue for good parts in the lot (N - true defects)
-    const good = state.lotSize - lotDefectsTrue;
-    state.revenue += good * state.pricePerUnit;
-    state.satisfaction = Math.max(0, state.satisfaction - lotDefectsTrue*0.8); // customers annoyed by escapes
-    log(`📦 Lot #${L} ACCEPTED (measured ${measuredDef} ≤ c=${state.acceptC}). Escapes:${lotDefectsTrue}.`);
-    beep(880,120,'triangle',0.07);
-  }else{
-    state.costScrap += state.scrapCost * state.lotSize;
-    state.satisfaction = Math.max(0, state.satisfaction - 3); // delays
-    log(`🗑️ Lot #${L} REJECTED (measured ${measuredDef} > c=${state.acceptC}). Scrapped.`);
-    beep(180,160,'sawtooth',0.07);
+  // Police rubberband (too aggressive) // ANTI-PATTERN #5
+  G.policeY = clamp(G.policeY - (G.p.speed*0.06) + (G.p.hits*4) - (G.p.nitroUntil>now()? 8 : 0), 520, 680);
+  if(G.policeY <= 540){ // visible
+    G.policeCatch += 0.35; // arbitrary catch meter
+    if(G.policeCatch>100){ G.p.hits=3; } // instant bust
+  } else {
+    G.policeCatch = Math.max(0, G.policeCatch-0.15);
   }
 
-  state.totalLots++;
-  // Reset lot counters
-  state.itemsThisLot = 0; state.lotIdx++; $('lotIdx').textContent = state.lotIdx;
+  // Particles drift (never pruned) // ANTI-PATTERN #12
+  for(const p of G.particles){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.life+=dt; }
 
-  // Achievements
-  if(state.acceptedLots>=3) unlock('✅ 3 Accepted Lots');
-  if(state.escapesAll===0 && state.totalLots>=2) unlock('🌟 Zero Escapes (so far)');
-
-  // Occasionally, auto-drift small negative to satisfaction recover
-  state.satisfaction = Math.min(100, state.satisfaction + 1.5);
-}
-
-/* STOP line: costs downtime, resets μ to μ0 and clears OOC flag */
-function stopLine(){
-  // Only meaningful if OOC
-  state.costStops += state.stopCost;
-  state.mu = state.mu0;
-  state.oocFlag=false; state.oocSinceIdx=null;
-  state.resets++;
-  state.satisfaction = Math.min(100, state.satisfaction + 4);
-  log('🛑 Line stopped & centered to μ₀. OOC cleared.');
-  toast('Line investigated. Back to target.');
-  beep(520,120,'square',0.06);
-}
-
-/* Maintenance: temporarily reduce σ by 30% for 30s */
-function doMaintenance(){
-  const until = performance.now() + 30000;
-  state.sigmaCurr = Math.max(0.05, state.sigma * 0.7);
-  state.maintUntil = until;
-  $('sigmaTag').textContent = state.sigmaCurr.toFixed(2);
-  log('🧰 Maintenance: σ reduced by 30% for 30s.');
-  unlock('🧰 Preventive Strike');
-  beep(640,120,'triangle',0.06);
-}
-
-/* Calibration: temporarily halves gage %Tol for 25s */
-function calibrateGage(){
-  const until = performance.now() + 25000;
-  state.gagePctTol = Number($('gagePctTol').value);
-  const newPct = state.gagePctTol/2;
-  state.calUntil = until;
-  state.gageSigma = (newPct/100)*(state.USL-state.LSL);
-  $('gageTag').textContent = newPct.toFixed(1);
-  log('🧪 Calibration: gage σ%Tol halved for 25s.');
-  unlock('🧪 Tight Readings');
-  beep(700,100,'sine',0.05);
-}
-
-/* Visual items (conveyor) */
-let lotColorA = '#22c55e', lotColorB = '#eab308';
-function spawnVisualItem(trueX, isDef){
-  const ctx = g.game.canvas;
-  const yBase = ctx.height-60, lane = 0;
-  const it = {
-    x: -20, y: yBase - lane*22,
-    vx: 140, // px/s
-    trueX, isDef,
-    lot: state.lotIdx,
-    color: isDef ? '#ef4444' : (state.lotIdx%2 ? lotColorA : lotColorB)
-  };
-  state.items.push(it);
-}
-
-/* ===========================
-   Drawing
-=========================== */
-function drawAll(){
-  drawFactory();
-  drawSPC();
   updateHUD();
 }
-function drawFactory(){
-  const ctx = g.game; const W = ctx.canvas.width, H = ctx.canvas.height;
-  ctx.clearRect(0,0,W,H);
 
-  // floor & conveyor
-  ctx.fillStyle = '#0d1b2a'; ctx.fillRect(0,H-40,W,40);
-  ctx.fillStyle = '#0a1323'; ctx.fillRect(0,H-80,W,40);
-  // rollers
-  for(let x=0;x<W;x+=60){
-    ctx.beginPath(); ctx.arc(x+(Date.now()/30)%60, H-60, 8, 0, Math.PI*2);
-    ctx.fillStyle = '#1f2937'; ctx.fill();
-  }
-  // machine
-  ctx.fillStyle = '#142a4a'; roundRect(ctx, 20, 20, 210, 120, 12, true);
-  ctx.fillStyle = '#0d213f'; roundRect(ctx, 30, 30, 190, 60, 8, true);
-  ctx.fillStyle = '#1e3a8a'; roundRect(ctx, 30, 96, 190, 32, 8, true);
-  // gauges
-  drawGauge(ctx, 46, 44, state.mu - state.mu0, -0.5, 0.5, 'Δμ');
-  drawGauge(ctx, 114, 44, state.sigmaCurr, 0.05, 0.3, 'σ');
-  drawGauge(ctx, 182, 44, state.gageSigma, 0, (state.USL-state.LSL)*0.2, 'gage σ');
-
-  // items
-  for(const it of state.items){
-    ctx.beginPath();
-    ctx.fillStyle = it.color;
-    ctx.strokeStyle = '#020617';
-    ctx.lineWidth = 1.2;
-    ctx.arc(it.x, it.y, 7.5, 0, Math.PI*2);
-    ctx.fill(); ctx.stroke();
-  }
-
-  // labels
-  ctx.fillStyle = '#9ca3af';
-  ctx.fillText(`Lot #${state.lotIdx}`, W-100, 18);
-  if(state.oocFlag){
-    ctx.fillStyle = '#ef4444';
-    ctx.font = 'bold 14px system-ui';
-    ctx.fillText('OOC! STOP!', W-110, 36);
-    ctx.font = '15px system-ui';
-  }
+/* ========= Steering with lag ========= */
+let steerTimer=null;
+function delayedSteer(dir){
+  if(steerTimer) return;
+  // ANTI-PATTERN #2: add 100ms input lag on steering
+  steerTimer = setTimeout(()=>{ G.p.vx = dir*220; steerTimer=null; }, 100);
 }
+
+/* ========= Collisions (inflated AABB) ========= */
+// Player proxy rect bigger than sprite (unfair)
+function aabbHit(p, o){
+  const px = p.x - p.rHitX/2, py = p.y - p.rHitY/2, pw = p.rHitX, ph = p.rHitY; // ANTI-PATTERN #1
+  const ox = o.x - o.w/2, oy = o.y - o.h/2;
+  return !(px+pw < ox || px > ox+o.w || py+ph < oy || py > oy+o.h);
+}
+function aabbCollect(p, o){
+  const px = p.x - (p.rHitX*0.8)/2, py = p.y - (p.rHitY*0.6)/2, pw=p.rHitX*0.8, ph=p.rHitY*0.6;
+  const ox = o.x - o.r, oy = o.y - o.r, ow = o.r*2, oh = o.r*2;
+  return !(px+pw < ox || px > ox+ow || py+ph < oy || py > oy+oh);
+}
+
+/* ========= Events ========= */
+function spawnTraffic(){
+  // ANTI-PATTERN #3: unfair spawns near player & clumping
+  const lane = randi(0, G.laneX.length-1);
+  const x = (Math.random()<0.2) ? G.p.x + rand(-40,40) : G.laneX[lane] + rand(-14,14);
+  G.cars.push({x, y:-120, w:54, h:96, v:rand(20,80), color: (Math.random()<0.5?'#e11d48':'#6366f1')});
+}
+function spawnCoin(){
+  const lane = randi(0, G.laneX.length-1);
+  G.coins.push({x:G.laneX[lane] + rand(-18,18), y:-30, r:9});
+}
+function spawnCone(){
+  const lane = randi(0, G.laneX.length-1);
+  G.cones.push({x:G.laneX[lane] + rand(-18,18), y:-30, w:20, h:20});
+}
+
+/* ========= Reactions ========= */
+function hitCrash(kind){
+  G.p.hits++;
+  if($('shakeOn').checked){ G.shakeA = 20; G.shakeT = 0.35; } // ANTI-PATTERN #13: too strong shake
+  beep(220,160,'sawtooth');
+  spawnBurst(G.p.x, G.p.y, '#ef4444');
+  G.events.push({t:Math.round(G.t*1000), ev:'hit', kind, hits:G.p.hits});
+}
+function doNitro(){
+  if(G.p.nitro<=0) return;
+  // ANTI-PATTERN #7: Nitro lasts too long (6s) & boosts too much
+  G.p.nitro -= 20;
+  G.p.nitroUntil = now()+6000;
+  toast('🔥 NITRO!');
+  beep(980,100,'square');
+}
+
+/* ========= Drawing ========= */
+function draw(){
+  const W=G.W, H=G.H;
+  // Shake
+  let offx=0, offy=0;
+  if(G.shakeA>0 && G.shakeT>0){
+    offx = (Math.random()*2-1)*G.shakeA;
+    offy = (Math.random()*2-1)*G.shakeA;
+    G.shakeT -= G.dt; if(G.shakeT<=0) G.shakeA=0;
+  }
+  ctx.save(); ctx.clearRect(0,0,W,H); ctx.translate(offx,offy);
+
+  drawRoad(ctx);
+
+  // Coins
+  for(const c of G.coins){ ctx.beginPath(); ctx.fillStyle='#22c55e'; ctx.arc(c.x,c.y,c.r,0,6.283); ctx.fill(); }
+
+  // Cones
+  for(const c of G.cones){
+    ctx.fillStyle='#f59e0b'; ctx.beginPath();
+    ctx.moveTo(c.x, c.y-10); ctx.lineTo(c.x-10,c.y+10); ctx.lineTo(c.x+10,c.y+10); ctx.closePath(); ctx.fill();
+  }
+
+  // Traffic cars
+  for(const c of G.cars){ drawCar(ctx, c.x, c.y, c.w, c.h, c.color); }
+
+  // Player car
+  drawCar(ctx, G.p.x, G.p.y, G.p.w, G.p.h, '#eab308', true);
+
+  // Police strip
+  drawPolice(ctx);
+
+  // Particles (never pruned) // ANTI-PATTERN #12
+  for(const p of G.particles){
+    ctx.fillStyle = p.c; ctx.globalAlpha = Math.max(0, 1 - p.life/1.1);
+    ctx.fillRect(p.x,p.y,2,2);
+  }
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+
+function drawRoad(ctx){
+  const W=G.W, H=G.H;
+  // shoulders
+  ctx.fillStyle=varCss('--shoulder'); ctx.fillRect(0,0,G.roadX,H); ctx.fillRect(G.roadX+G.roadW,0,W-(G.roadX+G.roadW),H);
+  // road
+  ctx.fillStyle=varCss('--road'); ctx.fillRect(G.roadX,0,G.roadW,H);
+
+  // lane lines
+  ctx.strokeStyle=varCss('--line'); ctx.lineWidth=2; ctx.setLineDash([24,20]);
+  const laneW = G.roadW / G.laneN;
+  const yOff = (G.stripeY%44);
+  for(let i=1;i<G.laneN;i++){
+    const x = G.roadX + laneW*i;
+    ctx.beginPath(); ctx.moveTo(x, -20 + yOff); ctx.lineTo(x, H+20 + yOff); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // roadside instant KO? (No, but see collisions unfair) // FIXME consider soft walls
+}
+
+function drawCar(ctx, x,y,w,h, color, isPlayer=false){
+  // body
+  ctx.save(); ctx.translate(x,y);
+  const g = ctx.createLinearGradient(0,-h/2,0,h/2);
+  g.addColorStop(0, lighten(color,0.2)); g.addColorStop(1, darken(color,0.3));
+  ctx.fillStyle=g; roundRect(ctx,-w/2,-h/2,w,h,10,true);
+
+  // windows
+  ctx.fillStyle='rgba(96,165,250,0.6)'; roundRect(ctx,-w*0.30,-h*0.30,w*0.60,h*0.28,6,true);
+
+  // lights
+  ctx.fillStyle='#fee2e2'; ctx.fillRect(-w*0.3, -h/2+4, w*0.6, 6);
+  ctx.fillStyle='#fde68a'; ctx.fillRect(-w*0.3, h/2-10, w*0.6, 6);
+
+  if(isPlayer && G.p.nitroUntil>now()){
+    ctx.fillStyle='#60a5fa'; ctx.globalAlpha=0.9;
+    ctx.beginPath(); ctx.moveTo(-w*0.2,h/2); ctx.lineTo(w*0.2,h/2); ctx.lineTo(0,h/2+rand(18,36)); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1;
+  }
+  ctx.restore();
+}
+
+function drawPolice(ctx){
+  // Siren bar at bottom indicating proximity
+  const W=G.W, H=G.H;
+  ctx.fillStyle='#0b1428'; ctx.fillRect(10,H-20,W-20,10);
+  const catchPct = clamp(G.policeCatch,0,100)/100;
+  ctx.fillStyle= catchPct>0.8 ? '#ef4444' : '#f59e0b';
+  ctx.fillRect(10,H-20,(W-20)*catchPct,10);
+}
+
 function roundRect(ctx,x,y,w,h,r,fill){
   ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.arcTo(x+w,y,x+w,y+h,r);
-  ctx.arcTo(x+w,y+h,x,y+h,r);
-  ctx.arcTo(x,y+h,x,y,r);
-  ctx.arcTo(x,y,x+w,y,r);
-  if(fill) ctx.fill();
-  else ctx.stroke();
-}
-function drawGauge(ctx, cx, cy, val, vmin, vmax, label){
-  const r=12;
-  const t = Math.max(0, Math.min(1, (val-vmin)/(vmax-vmin)));
-  ctx.fillStyle = '#0b1428'; ctx.strokeStyle = '#1f2b44';
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(cx, cy); const ang = -Math.PI*0.75 + 1.5*Math.PI*t; ctx.lineTo(cx + r*Math.cos(ang), cy + r*Math.sin(ang)); ctx.strokeStyle='#60a5fa'; ctx.stroke();
-  ctx.fillStyle = '#93c5fd'; ctx.font='10px system-ui'; ctx.fillText(label, cx-10, cy+26);
-}
-function drawSPC(){
-  const ctx = g.spc; const W=ctx.canvas.width, H=ctx.canvas.height;
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle = '#06101b'; ctx.fillRect(0,0,W,H);
-  // axes
-  ctx.strokeStyle = '#203047'; ctx.beginPath(); ctx.moveTo(40,10); ctx.lineTo(40,H-30); ctx.lineTo(W-10,H-30); ctx.stroke();
-  // compute y scale
-  const vals = state.xbarSeries.slice(-80);
-  if(vals.length===0) return;
-  const min = Math.min(state.LCL, ...vals)-0.05;
-  const max = Math.max(state.UCL, ...vals)+0.05;
-  const yOf = v => (H-30) - (v-min)/(max-min)*(H-50);
-  const x0 = 42, dx = (W-60)/Math.max(20, vals.length);
-
-  // CL/UCL/LCL
-  ctx.strokeStyle = '#38bdf8'; drawH(ctx, yOf(state.CL), x0, W-14, [5,4]);
-  ctx.strokeStyle = '#94a3b8'; drawH(ctx, yOf(state.UCL), x0, W-14, [2,4]);
-  ctx.strokeStyle = '#94a3b8'; drawH(ctx, yOf(state.LCL), x0, W-14, [2,4]);
-
-  // series
-  ctx.strokeStyle = '#22c55e'; ctx.lineWidth=1.2; ctx.beginPath();
-  vals.forEach((m,i)=>{ const x = x0 + i*dx; const y=yOf(m); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }); ctx.stroke();
-
-  // OOC markers
-  vals.forEach((m,i)=>{ if(m>state.UCL || m<state.LCL){ const x=x0+i*dx, y=yOf(m); ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.arc(x,y,3,0,6.28); ctx.fill(); }});
-
-  // labels
-  ctx.fillStyle='#93a3b5'; ctx.font='11px system-ui';
-  ctx.fillText('X̄', 8, 14);
-  ctx.fillText('UCL', 6, yOf(state.UCL)+4);
-  ctx.fillText('CL', 6, yOf(state.CL)+4);
-  ctx.fillText('LCL', 6, yOf(state.LCL)+4);
-}
-function drawH(ctx, y, x1, x2, dash){
-  ctx.setLineDash(dash||[]); ctx.beginPath(); ctx.moveTo(x1,y); ctx.lineTo(x2,y); ctx.stroke(); ctx.setLineDash([]);
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r);
+  if(fill) ctx.fill(); else ctx.stroke();
 }
 
-/* HUD updates */
+function spawnBurst(x,y,color='#22c55e'){
+  for(let i=0;i<10;i++){
+    G.particles.push({x,y,vx:rand(-80,80),vy:rand(-80,80),life:0,c:color});
+  }
+}
+
+/* ========= HUD ========= */
 function updateHUD(){
-  // KPIs
-  const N = state.lotSize * Math.max(1, state.totalLots);
-  const aoq = (N>0) ? (state.escapesAll / N) : 0;
-  $('aoq').textContent = (aoq*100).toFixed(2)+'%';
-  $('dpmo').textContent = Math.round((state.trueDefectsAll/(N||1))*1e6).toLocaleString();
-  $('pa').textContent = (state.totalLots>0 ? (state.acceptedLots/state.totalLots*100).toFixed(1) : '—') + '%';
-  $('cpk').textContent = computeCpk().toFixed(2);
-  const profit = state.revenue - (state.costInspect + state.costScrap + state.costExternal + state.costStops);
-  $('profit').textContent = fmtMoney(profit);
-  $('hs').textContent = fmtMoney(state.highScore || Number(localStorage.getItem('fq_high')||0));
+  $('score').textContent = G.score;
+  $('hits').textContent = G.p.hits;
+  $('nitro').textContent = G.p.nitro+'%';
+  const rem = Math.max(0, Math.round((G.endAt - now())/1000));
+  $('timer').textContent = secToMMSS(rem);
+  $('hs').textContent = G.high;
+  if(G.score>=2000) unlock('💫 2K Club');
+  if(G.p.hits===0 && rem<20) unlock('🛡️ Clean Run (so far)');
 }
-
-/* Helpers */
-function computeCpk(){
-  // Estimate from last ~400 true items using normal approx (we don't store all; sample from visuals by value)
-  const vals = state.items.slice(-400).map(v=>v.trueX);
-  if(vals.length<3) return 0;
-  const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
-  const sd = Math.sqrt(vals.reduce((s,x)=>s+(x-mean)*(x-mean),0)/(vals.length-1));
-  return Math.min((state.USL-mean)/(3*sd),(mean-state.LSL)/(3*sd)) || 0;
-}
-function fmtMoney(x){ return '$'+(Math.round(x*100)/100).toFixed(2); }
-function secToMMSS(s){ s=Math.max(0,Math.round(s)); const m=Math.floor(s/60), r=s%60; return String(m).padStart(2,'0')+':'+String(r).padStart(2,'0'); }
-function updateTimer(){ $('timer').textContent = secToMMSS(state.timeLeft); }
-
-/* Achievements */
-const got = new Set();
 function unlock(name){
-  if(got.has(name)) return;
-  got.add(name);
-  const b = document.createElement('span');
-  b.className='ach'; b.textContent=name;
-  $('achWrap').appendChild(b);
+  if(document.querySelector(`[data-ach="${name}"]`)) return;
+  const s=document.createElement('span'); s.className='ach'; s.textContent=name; s.dataset.ach=name;
+  $('achWrap').appendChild(s);
 }
 
-/* CSV Export */
+/* ========= Helpers ========= */
+function varCss(name){ return getComputedStyle(document.documentElement).getPropertyValue(name); }
+function lighten(hex, amt){ const c=parseInt(hex.slice(1),16); let r=(c>>16)+Math.round(255*amt), g=((c>>8)&255)+Math.round(255*amt), b=(c&255)+Math.round(255*amt); r=Math.min(255,r); g=Math.min(255,g); b=Math.min(255,b); return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); }
+function darken(hex, amt){ const c=parseInt(hex.slice(1),16); let r=(c>>16)-Math.round(255*amt), g=((c>>8)&255)-Math.round(255*amt), b=(c&255)-Math.round(255*amt); r=Math.max(0,r); g=Math.max(0,g); b=Math.max(0,b); return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); }
+function secToMMSS(s){ s=Math.max(0,Math.round(s)); const m=Math.floor(s/60), r=s%60; return String(m).padStart(2,'0')+':'+String(r).padStart(2,'0'); }
+
+/* ========= CSV ========= */
 function exportCSV(){
-  const lines = [];
-  lines.push('Metric,Value');
-  lines.push(`LSL,${state.LSL}`); lines.push(`USL,${state.USL}`); lines.push(`mu0,${state.mu0}`); lines.push(`sigma,${state.sigma}`);
-  lines.push(`lotSize,${state.lotSize}`); lines.push(`sampleN,${state.sampleN}`); lines.push(`acceptC,${state.acceptC}`); lines.push(`subgroupN,${state.subgroupN}`);
-  lines.push(`gagePctTol,${state.gagePctTol}`); lines.push(`driftPer100,${state.driftPer100}`); lines.push(`acProb,${state.acProb}`); lines.push(`acSigmaMult,${state.acSigmaMult}`);
-  lines.push(`inspectCost,${state.inspectCost}`); lines.push(`scrapCost,${state.scrapCost}`); lines.push(`extCost,${state.extCost}`); lines.push(`stopCost,${state.stopCost}`);
-
-  const N = state.lotSize * Math.max(1, state.totalLots);
-  const aoq = (N>0) ? (state.escapesAll / N) : 0;
-  const dpmo = (state.trueDefectsAll/(N||1))*1e6;
-  lines.push(`AOQ,${aoq}`);
-  lines.push(`DPMO,${dpmo}`);
-  lines.push(`LotsAccepted,${state.acceptedLots}`);
-  lines.push(`TotalLots,${state.totalLots}`);
-  lines.push(`Resets,${state.resets}`);
-  lines.push(`Revenue,${state.revenue}`);
-  lines.push(`CostInspect,${state.costInspect}`);
-  lines.push(`CostScrap,${state.costScrap}`);
-  lines.push(`CostExternal,${state.costExternal}`);
-  lines.push(`CostStops,${state.costStops}`);
-  lines.push('');
-
-  lines.push('Xbar Series (most recent first)');
-  lines.push('index,xbar');
-  state.xbarSeries.forEach((m,i)=> lines.push(`${i},${m}`));
-
-  const blob = new Blob([lines.join('\n')], {type:'text/csv'});
+  const rows = [];
+  rows.push('t_ms,event,kind,score,hits,policeCatch');
+  for(const e of G.events){ rows.push([e.t,e.ev,e.kind||'',G.score,G.p.hits,G.policeCatch].join(',')); }
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download='factory_quality_quest.csv'; a.click();
+  const a = document.createElement('a'); a.href=url; a.download='turbo_racers_run.csv'; a.click();
   URL.revokeObjectURL(url);
 }
 
-/* ===========================
-   Boot
-=========================== */
-bindInputs();
-recalcDerived();
-displayParams();
-resetGame();
+/* ========= Missions Modal ========= */
+function showMissions(){ $('missions').style.display='flex'; }
 
-/* Show tutorial on first load only */
-if(!localStorage.getItem('fq_seen')){
-  $('tutorial').style.display='flex';
-  localStorage.setItem('fq_seen','1');
+/* ========= Boot ========= */
+function boot(){
+  updateHUD();
+  draw();
+  $('timer').textContent = secToMMSS(Math.round(G.roundLen/1000));
+  $('roundName').textContent = 'Neon Express';
+  $('hs').textContent = G.high;
 }
+boot();
 
-/* Small helpers for canvas draws above */
-function drawText(ctx, txt, x,y,color='#cbd5e1',size=12){ctx.fillStyle=color;ctx.font=`${size}px system-ui`;ctx.fillText(txt,x,y);}
+/* ========= INTENTIONALLY BAD CHOICES TO FIX =========
+  #1  Oversized player hitbox vs sprite (unfair collisions):      p.rHitX/rHitY
+  #2  Steering input lag (100 ms setTimeout in delayedSteer).
+  #3  Unfair/clumped traffic spawns (near player without spacing).
+  #4  30 FPS cap + fixed dt (ignores real frame time).
+  #5  Police rubberband too aggressive (unfun catch-ups).
+  #6  SFX volume too high & ignores SFX checkbox.
+  #7  Nitro too strong and lasts too long (6s, x1.55 speed).
+  #8  Pause doesn't stop spawners (setInterval keeps firing).
+  #9  Score keeps increasing while paused (ivScoreTick).
+  #10 Inflated AABB collision instead of tight polygon/car outline.
+  #11 Touch controls are cosmetic only (not wired).
+  #12 Particle leak (never pruned/capped — memory churn).
+  #13 Screen shake too strong & long on hit (motion sickness risk).
+  #14 No color-blind/accessibility mode; color-only cues.
+===================================================== */
+
+/* ========= Example Fix Prompts (for students) =========
+(Keep these here so students can copy and iterate. You can remove later.)
+
+// 1) Align hitbox with sprite & separate collect radius
+// "Open index.html. Reduce player hitbox to rHitX=50, rHitY=90 and update aabbHit to use those.
+// Keep coin collection generous by using rHitX*0.7, rHitY*0.6 in aabbCollect. Show unified diff only."
+
+// 2) Remove steering lag & make continuous
+// "In delayedSteer(), remove setTimeout and set G.p.vx = dir*220 immediately on keydown,
+// but decay vx toward 0 when no arrow keys are pressed. Acceptance: steering feels instant."
+
+// 3) Make pause real
+// "When paused, clear all intervals, and on resume, recreate them. Also freeze nitro/slip timers by storing remaining ms and resuming after unpause."
+
+// 4) Uncap FPS and use real dt
+// "In loop(ts), delete the elapsed<33 early return and compute dt=(ts-G.last)/1000, clamp dt<=0.05.
+// Use dt everywhere; remove the fixed 0.033 assignment."
+
+// 5) Balance nitro and rubberband
+// "Set nitro boost to 1.2x for 2.5s; reduce police catch rate by half and add decay when player speeds up for 2s."
+
+// 6) Wire SFX checkbox & tame volume
+// "Change beep() to return if !$('sfxOn').checked and reduce default vol to 0.06."
+
+// 7) De-clump traffic spawns
+// "Before pushing a traffic car, ensure distance from player > 120px and from last 3 cars > 90px."
+
+// 8) Particle cap & pruning
+// "Each frame, remove particles with life>1.1 and cap total at 300 (drop oldest)."
+===================================================== */
 </script>
 </body>
 </html>
